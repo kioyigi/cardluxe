@@ -180,7 +180,7 @@ export default function HighlyActiveCards() {
                       <td className="px-6 py-4">
                         <div>
                           <p className="text-white font-medium">
-                            {card.card_name} {card.card_number}
+                            {card.card_name}
                           </p>
                         </div>
                       </td>
