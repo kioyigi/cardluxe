@@ -1,17 +1,17 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 const SEED_QUERIES = [
-  'pokemon card',
-  'pokemon single',
+  'pokemon single card',
   'pokemon alt art',
   'pokemon illustration rare',
   'pokemon secret rare',
   'pokemon trainer full art',
-  'pokemon charizard',
-  'pokemon pikachu',
   'pokemon ex',
+  'pokemon v',
   'pokemon vmax',
-  'pokemon vstar'
+  'pokemon vstar',
+  'pokemon charizard',
+  'pokemon pikachu'
 ];
 
 const GRADING_KEYWORDS = [
@@ -20,9 +20,11 @@ const GRADING_KEYWORDS = [
 ];
 
 const EXCLUDE_KEYWORDS = [
-  'lot', 'bundle', 'pack', 'booster', 'box', 'case', 'code',
-  'digital', 'proxy', 'custom', 'reprint', 'replica', 'sleeves',
-  'toploader', 'binder', 'deck', 'playmat', 'etb'
+  'lot', 'bundle', 'set of', 'choose', 'choose your', 'random', 'mystery',
+  'pack', 'booster', 'box', 'case', 'etb', 'code', 'digital', 'proxy',
+  'custom', 'reprint', 'replica', 'sleeves', 'toploader', 'handmade',
+  'per order', 'in stock', 'japanese', 'korean', 'chinese', 's chinese',
+  'binder', 'deck', 'playmat'
 ];
 
 const CONDITION_FLUFF = [
@@ -52,19 +54,15 @@ function normalizeTitle(title) {
   return filtered.join(' ');
 }
 
-function extractCardNumber(title) {
-  const patterns = [
-    /(\d+)\/(\d+)/,
-    /#(\d+)\/(\d+)/,
-    /\b(\d{1,3})\/(\d{1,3})\b/
-  ];
+function extractAndValidateCardNumber(title) {
+  const pattern = /\b\d{1,3}\/\d{2,3}\b/g;
+  const matches = title.match(pattern);
   
-  for (const pattern of patterns) {
-    const match = title.match(pattern);
-    if (match) {
-      return `${match[1]}/${match[2]}`;
-    }
+  // CRITICAL: Only accept if EXACTLY ONE card number pattern found
+  if (matches && matches.length === 1) {
+    return matches[0];
   }
+  
   return null;
 }
 
@@ -104,14 +102,17 @@ function extractPokemonName(normalizedTitle, cardNumber) {
 }
 
 function generateCardKey(title) {
+  const cardNumber = extractAndValidateCardNumber(title);
+  
+  // CRITICAL: Reject if no valid single card number
+  if (!cardNumber) {
+    return null;
+  }
+  
   const normalized = normalizeTitle(title);
-  const cardNumber = extractCardNumber(title);
   const pokemonName = extractPokemonName(normalized, cardNumber);
   
-  if (cardNumber) {
-    return `${pokemonName}|${cardNumber}`;
-  }
-  return `${pokemonName}|nonumber`;
+  return `${pokemonName}|${cardNumber}`;
 }
 
 async function getEbayToken() {
@@ -198,23 +199,27 @@ Deno.serve(async (req) => {
         if (!item.price?.value) continue;
         
         const cardKey = generateCardKey(title);
+        
+        // CRITICAL: Skip if no valid single card number detected
+        if (!cardKey) continue;
+        
         const price = parseFloat(item.price.value);
         const isAuction = item.buyingOptions?.includes('AUCTION') || false;
         
         if (!cardMap.has(cardKey)) {
-          const cardNumber = extractCardNumber(title);
+          const cardNumber = extractAndValidateCardNumber(title);
           const normalized = normalizeTitle(title);
           const pokemonName = extractPokemonName(normalized, cardNumber);
           
           cardMap.set(cardKey, {
             card_key: cardKey,
             card_name: pokemonName,
-            card_number: cardNumber || '',
+            card_number: cardNumber,
             frequency_count: 0,
             auction_count: 0,
             total_count: 0,
             sampled_prices: [],
-            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(pokemonName + (cardNumber ? ' ' + cardNumber : ''))}&_sacat=183454`
+            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(pokemonName + ' ' + cardNumber)}&_sacat=183454`
           });
         }
         
