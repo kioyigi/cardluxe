@@ -18,6 +18,8 @@ export default function CardDetail() {
   const location = useLocation();
   const cardId = new URLSearchParams(location.search).get('cardId');
   
+  console.log('[CardDetail] Render - cardId:', cardId, 'location.search:', location.search);
+  
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
@@ -38,13 +40,17 @@ export default function CardDetail() {
 
   // Fetch card details from TCGdex
   useEffect(() => {
+    console.log('[CardDetail] useEffect fetch - cardId:', cardId);
+    
     if (!cardId) {
+      console.log('[CardDetail] No cardId, setting card to null');
       setCard(null);
       setLoading(false);
       return;
     }
     
     const fetchCard = async () => {
+      console.log('[CardDetail] Fetching card:', cardId);
       setLoading(true);
       try {
         // Try fetching with the full card ID
@@ -172,11 +178,11 @@ export default function CardDetail() {
     );
   }
 
-  if (!card) {
+  if (!card && !loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-zinc-400 text-lg mb-4">Card not found</p>
+          <p className="text-zinc-400 text-lg mb-4">Card not found (cardId: {cardId})</p>
           <Link to={createPageUrl("Cards")}>
             <Button variant="outline" className="border-zinc-700">
               <ArrowLeft className="h-4 w-4 mr-2" />
