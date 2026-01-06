@@ -33,7 +33,8 @@ Deno.serve(async (req) => {
     const limit = 200; // eBay max per request
 
     while (allCards.length < 2000 && offset < 10000) {
-      const searchUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=pokemon+card&sort=price&limit=${limit}&offset=${offset}&category_ids=183454&filter=conditionIds:{1000|1500|2000|2500|3000}`;
+      // Sort by price descending (-price), filter for New/Like New conditions (1000, 1500)
+      const searchUrl = `https://api.ebay.com/buy/browse/v1/item_summary/search?q=pokemon+card&sort=-price&limit=${limit}&offset=${offset}&category_ids=183454&filter=conditionIds:{1000|1500}`;
       
       const response = await fetch(searchUrl, {
         headers: {
@@ -52,8 +53,8 @@ Deno.serve(async (req) => {
         if (seenTitles.has(normalizedTitle)) continue;
         seenTitles.add(normalizedTitle);
 
-        // Only include items with valid prices
-        if (item.price?.value) {
+        // Only include items with valid prices and images
+        if (item.price?.value && (item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl)) {
           allCards.push({
             id: item.itemId,
             name: item.title,
@@ -75,10 +76,8 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    // Sort by price descending and take top 2000
-    const topCards = allCards
-      .sort((a, b) => b.price - a.price)
-      .slice(0, 2000);
+    // Already sorted by price descending from API, just take top 2000
+    const topCards = allCards.slice(0, 2000);
 
     return Response.json({ cards: topCards });
   } catch (error) {
