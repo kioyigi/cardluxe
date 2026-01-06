@@ -4,6 +4,7 @@ import CardDetail from './pages/CardDetail';
 import Cards from './pages/Cards';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
+import HighlyActiveCards from './pages/HighlyActiveCards';
 import __Layout from './Layout.jsx';
 
 
@@ -14,6 +15,7 @@ export const PAGES = {
     "Cards": Cards,
     "Home": Home,
     "Profile": Profile,
+    "HighlyActiveCards": HighlyActiveCards,
 }
 
 export const pagesConfig = {

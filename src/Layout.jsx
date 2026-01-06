@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { 
   Menu, X, Home, CreditCard, Gavel, User, 
-  LogIn, Search, ChevronDown
+  LogIn, Search, ChevronDown, TrendingUp
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -41,6 +41,7 @@ export default function Layout({ children, currentPageName }) {
   const navItems = [
     { name: 'Home', page: 'Home', icon: Home },
     { name: 'Cards', page: 'Cards', icon: CreditCard },
+    { name: 'Trending', page: 'HighlyActiveCards', icon: TrendingUp },
     { name: 'Auctions', page: 'Auctions', icon: Gavel },
   ];
 
