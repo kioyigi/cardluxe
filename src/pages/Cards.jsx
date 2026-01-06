@@ -58,6 +58,7 @@ export default function Cards() {
             if (set.cards) {
               const cardsWithSet = set.cards.map(card => ({
                 ...card,
+                id: card.id || `${setId}-${card.localId}`, // Ensure proper ID format
                 set: { id: setId, name: set.name }
               }));
               allFetchedCards.push(...cardsWithSet);
