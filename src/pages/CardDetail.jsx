@@ -87,9 +87,17 @@ export default function CardDetail() {
   // Fetch sold listings for this card
   const { data: soldListings = [], isLoading: loadingListings } = useQuery({
     queryKey: ['soldListings', cardId],
-    queryFn: () => base44.entities.SoldListing.filter({ card_id: cardId }, '-sale_date', 10),
-    enabled: !!cardId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    queryFn: async () => {
+      try {
+        return await base44.entities.SoldListing.filter({ card_id: cardId }, '-sale_date', 10);
+      } catch (error) {
+        console.log('No sold listings found:', error);
+        return [];
+      }
+    },
+    enabled: !!cardId && !!card,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 
   // Check if in watchlist
@@ -103,11 +111,12 @@ export default function CardDetail() {
         });
         setInWatchlist(items.length > 0);
       } catch (error) {
-        console.error('Error checking watchlist:', error);
+        console.log('Error checking watchlist:', error);
+        setInWatchlist(false);
       }
     };
     checkWatchlist();
-  }, [user?.email, cardId, card?.id]);
+  }, [user?.email, cardId]);
 
   // Prepare price history data
   const priceHistoryData = soldListings.map(listing => ({
