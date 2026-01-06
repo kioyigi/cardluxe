@@ -27,6 +27,7 @@ export default function CardGrid({ cards, loading, onCardClick }) {
           <Link
             to={createPageUrl("CardDetail") + `?cardId=${encodeURIComponent(card.id)}`}
             className="group block"
+            onClick={() => console.log('[CardGrid] Navigating to card:', card.id, 'Full URL:', createPageUrl("CardDetail") + `?cardId=${encodeURIComponent(card.id)}`)}
           >
             <div className="relative aspect-[2.5/3.5] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all duration-300">
               {/* Glow effect */}

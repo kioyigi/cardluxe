@@ -18,7 +18,7 @@ export default function CardDetail() {
   const location = useLocation();
   const cardId = new URLSearchParams(location.search).get('cardId');
   
-  console.log('[CardDetail] Render - cardId:', cardId, 'location.search:', location.search);
+  console.log('[CardDetail] Component render - cardId:', cardId, 'location.search:', location.search, 'location.pathname:', location.pathname);
   
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,17 +40,17 @@ export default function CardDetail() {
 
   // Fetch card details from TCGdex
   useEffect(() => {
-    console.log('[CardDetail] useEffect fetch - cardId:', cardId);
+    console.log('[CardDetail] useEffect triggered - cardId:', cardId, 'location.search:', location.search);
     
     if (!cardId) {
-      console.log('[CardDetail] No cardId, setting card to null');
+      console.log('[CardDetail] No cardId found in URL, setting card to null');
       setCard(null);
       setLoading(false);
       return;
     }
     
     const fetchCard = async () => {
-      console.log('[CardDetail] Fetching card:', cardId);
+      console.log('[CardDetail] Starting fetch for card:', cardId);
       setLoading(true);
       try {
         // Try fetching with the full card ID
