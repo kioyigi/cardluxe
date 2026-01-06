@@ -15,7 +15,6 @@ export default function Cards() {
   const [currentPage, setCurrentPage] = useState(1);
   const [allCards, setAllCards] = useState([]);
   const [filteredCards, setFilteredCards] = useState([]);
-  const [loading, setLoading] = useState(true);
   
   const CARDS_PER_PAGE = 50;
 
