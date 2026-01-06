@@ -62,7 +62,12 @@ export default function CardGrid({ cards, loading }) {
 
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                 <p className="text-white text-sm font-medium truncate">{card.name}</p>
-                {card.price && (
+                {card.displayPrice && (
+                  <p className="text-amber-400 text-xs font-bold">
+                    {card.displayCurrency === 'EUR' ? '€' : '$'}{card.displayPrice.toFixed(2)}
+                  </p>
+                )}
+                {card.price && !card.displayPrice && (
                   <p className="text-amber-400 text-xs font-bold">${card.price.toFixed(2)}</p>
                 )}
                 {card.set && (

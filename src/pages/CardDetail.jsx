@@ -339,10 +339,6 @@ export default function CardDetail() {
                     <p className="text-white">{card.condition || 'Unknown'}</p>
                   </div>
                   <div>
-                    <p className="text-zinc-500">Seller</p>
-                    <p className="text-white">{card.seller || 'N/A'}</p>
-                  </div>
-                  <div>
                     <p className="text-zinc-500">Currency</p>
                     <p className="text-white">{card.currency || 'USD'}</p>
                   </div>

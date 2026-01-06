@@ -12,6 +12,7 @@ export default function Cards() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedSet, setSelectedSet] = useState('');
   const [selectedRarity, setSelectedRarity] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const [currentPage, setCurrentPage] = useState(1);
   const [allCards, setAllCards] = useState([]);
   const [filteredCards, setFilteredCards] = useState([]);
@@ -38,11 +39,23 @@ export default function Cards() {
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
+  // Currency conversion rates (base USD)
+  const conversionRates = {
+    USD: 1,
+    CAD: 1.35,
+    EUR: 0.92
+  };
+
   useEffect(() => {
     if (ebayData?.cards) {
-      setAllCards(ebayData.cards);
+      const convertedCards = ebayData.cards.map(card => ({
+        ...card,
+        displayPrice: card.price * conversionRates[selectedCurrency],
+        displayCurrency: selectedCurrency
+      }));
+      setAllCards(convertedCards);
     }
-  }, [ebayData]);
+  }, [ebayData, selectedCurrency]);
 
   // Filter cards
   useEffect(() => {
@@ -62,14 +75,14 @@ export default function Cards() {
       filtered = filtered.filter(card => card.condition === selectedSet);
     }
 
-    // Price range filter (replacing rarity filter for eBay)
+    // Price range filter (using displayPrice in selected currency)
     if (selectedRarity && selectedRarity !== 'all') {
       if (selectedRarity === 'high') {
-        filtered = filtered.filter(card => card.price >= 100);
+        filtered = filtered.filter(card => card.displayPrice >= 100);
       } else if (selectedRarity === 'medium') {
-        filtered = filtered.filter(card => card.price >= 20 && card.price < 100);
+        filtered = filtered.filter(card => card.displayPrice >= 20 && card.displayPrice < 100);
       } else if (selectedRarity === 'low') {
-        filtered = filtered.filter(card => card.price < 20);
+        filtered = filtered.filter(card => card.displayPrice < 20);
       }
     }
 
@@ -108,6 +121,8 @@ export default function Cards() {
             setSelectedSet={setSelectedSet}
             selectedRarity={selectedRarity}
             setSelectedRarity={setSelectedRarity}
+            selectedCurrency={selectedCurrency}
+            setSelectedCurrency={setSelectedCurrency}
             sets={[
               { id: 'NEW', name: 'New' },
               { id: 'LIKE_NEW', name: 'Like New' },

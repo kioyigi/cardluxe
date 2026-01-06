@@ -53,6 +53,25 @@ Deno.serve(async (req) => {
         if (seenTitles.has(normalizedTitle)) continue;
         seenTitles.add(normalizedTitle);
 
+        // Extract condition from title
+        const title = item.title || '';
+        let parsedCondition = item.condition || 'Unknown';
+        
+        // Check for graded cards (PSA, BGS, CGC)
+        if (/PSA\s*10/i.test(title)) parsedCondition = 'PSA 10 Gem Mint';
+        else if (/PSA\s*9/i.test(title)) parsedCondition = 'PSA 9 Mint';
+        else if (/PSA\s*8/i.test(title)) parsedCondition = 'PSA 8 NM-MT';
+        else if (/BGS\s*10|Black\s*Label/i.test(title)) parsedCondition = 'BGS 10 Pristine';
+        else if (/BGS\s*9\.5/i.test(title)) parsedCondition = 'BGS 9.5 Gem Mint';
+        else if (/CGC\s*10/i.test(title)) parsedCondition = 'CGC 10 Pristine';
+        else if (/CGC\s*9\.5/i.test(title)) parsedCondition = 'CGC 9.5 Gem Mint';
+        // Check for raw conditions
+        else if (/mint|M\/NM|near mint|nm/i.test(title)) parsedCondition = 'Near Mint';
+        else if (/lightly\s*played|LP/i.test(title)) parsedCondition = 'Lightly Played';
+        else if (/moderately\s*played|MP/i.test(title)) parsedCondition = 'Moderately Played';
+        else if (/heavily\s*played|HP/i.test(title)) parsedCondition = 'Heavily Played';
+        else if (/damaged|poor/i.test(title)) parsedCondition = 'Damaged';
+
         // Only include items with valid prices and images
         if (item.price?.value && (item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl)) {
           allCards.push({
@@ -61,9 +80,8 @@ Deno.serve(async (req) => {
             price: parseFloat(item.price.value),
             currency: item.price.currency,
             image: item.image?.imageUrl || item.thumbnailImages?.[0]?.imageUrl,
-            condition: item.condition,
-            buyItNowUrl: item.itemWebUrl,
-            seller: item.seller?.username
+            condition: parsedCondition,
+            buyItNowUrl: item.itemWebUrl
           });
         }
 

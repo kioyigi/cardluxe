@@ -11,6 +11,8 @@ export default function CardFilters({
   setSelectedSet, 
   selectedRarity, 
   setSelectedRarity,
+  selectedCurrency,
+  setSelectedCurrency,
   sets,
   onClear,
   isEbay = false
@@ -28,6 +30,18 @@ export default function CardFilters({
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-3">
+        {/* Currency Selector */}
+        <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
+          <SelectTrigger className="w-full md:w-32 bg-zinc-900 border-zinc-700 text-white">
+            <SelectValue placeholder="Currency" />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-700">
+            <SelectItem value="USD" className="text-white hover:bg-zinc-800">USD $</SelectItem>
+            <SelectItem value="CAD" className="text-white hover:bg-zinc-800">CAD $</SelectItem>
+            <SelectItem value="EUR" className="text-white hover:bg-zinc-800">EUR €</SelectItem>
+          </SelectContent>
+        </Select>
+
         {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
