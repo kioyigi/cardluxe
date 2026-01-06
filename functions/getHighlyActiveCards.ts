@@ -27,6 +27,12 @@ const EXCLUDE_KEYWORDS = [
   'binder', 'deck', 'playmat'
 ];
 
+const CARD_TYPES = [
+  'VMAX', 'VSTAR', 'V', 'EX', 'ex', 'GX', 'TAG TEAM', 'MEGA', 
+  'LV.X', 'BREAK', 'PRIME', 'LEGEND', 'SP', 'Tera', 'Radiant', 
+  'Shining', 'Amazing Rare', 'Ultra Beast', 'Promo', 'Trainer Gallery'
+];
+
 const CONDITION_FLUFF = [
   'nm', 'lp', 'mp', 'hp', 'damaged', 'mint', 'near', 'played',
   'authentic', 'rare', 'vintage', 'holo', 'reverse', 'tcg',
@@ -82,17 +88,15 @@ function toTitleCase(str) {
 function extractPokemonName(normalizedTitle, cardNumber) {
   let text = normalizedTitle;
   
-  if (cardNumber) {
-    text = text.replace(cardNumber.replace('/', '\\/'), '');
-  }
-  
-  // Remove any embedded card number patterns
+  // Remove ALL card number patterns first (including the validated one)
   text = text.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '');
   text = text.replace(/\s+/g, ' ').trim();
   
   const words = text.split(' ').filter(w => w.length > 0);
   
-  const cardTypes = ['ex', 'vmax', 'vstar', 'mega', 'gx', 'v', 'break', 'lvx', 'lv x', 'tag team'];
+  // Match against canonical card types (case-insensitive)
+  const cardTypesLower = CARD_TYPES.map(t => t.toLowerCase());
+  
   const ignoreWords = [
     'the', 'and', 'or', 'edition', 'series', 'single', 'trading',
     'game', 'official', 'original', 'genuine', 'real', 'not', 'fake',
@@ -100,7 +104,7 @@ function extractPokemonName(normalizedTitle, cardNumber) {
     'from', 'booster', 'raw', 'ungraded', 'cracked', 'slab', 'pwcc',
     'beautiful', 'perfect', 'amazing', 'stunning', 'gorgeous', 'rare',
     'super', 'ultra', 'secret', 'full', 'art', 'alt', 'alternate',
-    'illustration', 'regular', 'special', 'delivery', 'promo', 'promotional',
+    'illustration', 'regular', 'special', 'delivery', 'promotional',
     'holo', 'holofoil', 'reverse', 'non', 'standard', 'etched', 'textured'
   ];
   
@@ -109,42 +113,46 @@ function extractPokemonName(normalizedTitle, cardNumber) {
   
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
+    const wordLower = word.toLowerCase();
     
-    if (cardTypes.includes(word)) {
-      variant = word;
+    // Check if word matches any canonical card type
+    const typeIndex = cardTypesLower.indexOf(wordLower);
+    if (typeIndex !== -1) {
+      variant = CARD_TYPES[typeIndex]; // Use canonical casing
       break;
     }
     
-    if (!ignoreWords.includes(word)) {
+    if (!ignoreWords.includes(wordLower)) {
       baseName += (baseName ? ' ' : '') + word;
     }
   }
   
+  // Final cleanup: remove any lingering card numbers from baseName
+  baseName = baseName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  
   return { baseName: baseName.trim(), variant: variant.trim() };
 }
 
-function normalizeVariant(variant) {
-  if (!variant) return '';
-  const upper = variant.toUpperCase();
-  if (['VMAX', 'VSTAR', 'V', 'GX', 'MEGA', 'BREAK'].includes(upper)) {
-    return upper;
-  }
-  return variant.toLowerCase();
-}
-
 function formatDisplayName(baseName, variant, localId) {
-  const titleCasedName = toTitleCase(baseName);
-  const normalizedVariant = normalizeVariant(variant);
+  if (!baseName) return '';
   
-  let displayName = titleCasedName;
-  if (normalizedVariant) {
-    displayName += ' ' + normalizedVariant;
+  // Strip any embedded card numbers from baseName
+  const cleanBaseName = baseName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  const titleCasedName = toTitleCase(cleanBaseName);
+  
+  // Build parts array
+  const parts = [titleCasedName];
+  
+  if (variant) {
+    parts.push(variant); // Use canonical casing from CARD_TYPES
   }
+  
   if (localId) {
-    displayName += ' ' + localId;
+    parts.push(localId);
   }
   
-  return displayName.trim();
+  // Join with pipe separator
+  return parts.join(' | ');
 }
 
 function generateCardKey(title) {
