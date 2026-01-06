@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 
 export default function CardDetail() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const cardId = urlParams.get('cardId');
+  const location = useLocation();
+  const cardId = new URLSearchParams(location.search).get('cardId');
   
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,26 +25,26 @@ export default function CardDetail() {
 
   // Check user authentication
   useEffect(() => {
-    let mounted = true;
     const checkAuth = async () => {
       try {
         const currentUser = await base44.auth.me();
-        if (mounted) setUser(currentUser);
+        setUser(currentUser);
       } catch (e) {
         // Not logged in
       }
     };
     checkAuth();
-    return () => { mounted = false; };
   }, []);
 
   // Fetch card details from TCGdex
   useEffect(() => {
-    let mounted = true;
+    if (!cardId) {
+      setCard(null);
+      setLoading(false);
+      return;
+    }
     
     const fetchCard = async () => {
-      if (!cardId) return;
-      
       setLoading(true);
       try {
         // Try fetching with the full card ID
@@ -58,30 +58,23 @@ export default function CardDetail() {
         
         if (!response.ok) {
           console.error('Card not found');
-          if (mounted) {
-            setCard(null);
-            setLoading(false);
-          }
+          setCard(null);
+          setLoading(false);
           return;
         }
         
         const data = await response.json();
         console.log('Card loaded:', data);
-        if (mounted) {
-          setCard(data);
-          setLoading(false);
-        }
+        setCard(data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching card:', error);
-        if (mounted) {
-          setCard(null);
-          setLoading(false);
-        }
+        setCard(null);
+        setLoading(false);
       }
     };
 
     fetchCard();
-    return () => { mounted = false; };
   }, [cardId]);
 
   // Fetch sold listings for this card
