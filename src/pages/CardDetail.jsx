@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +15,15 @@ import {
 } from 'lucide-react';
 
 export default function CardDetail() {
-  const location = useLocation();
-  const cardId = new URLSearchParams(location.search).get('cardId');
-  
-  console.log('[CardDetail] Component render - cardId:', cardId, 'location.search:', location.search, 'location.pathname:', location.pathname);
+  const [searchParams] = useSearchParams();
+  const cardId = searchParams.get('cardId');
   
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
   const [user, setUser] = useState(null);
+
+  console.log('[CardDetail] Render - cardId:', cardId);
 
   // Check user authentication
   useEffect(() => {
@@ -40,41 +40,39 @@ export default function CardDetail() {
 
   // Fetch card details from TCGdex
   useEffect(() => {
-    console.log('[CardDetail] useEffect triggered - cardId:', cardId, 'location.search:', location.search);
+    console.log('[CardDetail] useEffect - cardId:', cardId);
     
     if (!cardId) {
-      console.log('[CardDetail] No cardId found in URL, setting card to null');
+      console.log('[CardDetail] No cardId');
       setCard(null);
       setLoading(false);
       return;
     }
     
     const fetchCard = async () => {
-      console.log('[CardDetail] Starting fetch for card:', cardId);
+      console.log('[CardDetail] Fetching:', cardId);
       setLoading(true);
       try {
-        // Try fetching with the full card ID
         let response = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`);
         
-        // If not found and cardId contains a dash, try without set prefix
         if (!response.ok && cardId.includes('-')) {
           const [setId, localId] = cardId.split('-');
           response = await fetch(`https://api.tcgdex.net/v2/en/sets/${setId}/${localId}`);
         }
         
         if (!response.ok) {
-          console.error('Card not found');
+          console.error('[CardDetail] Card not found');
           setCard(null);
           setLoading(false);
           return;
         }
         
         const data = await response.json();
-        console.log('Card loaded:', data);
+        console.log('[CardDetail] Card loaded:', data.name);
         setCard(data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching card:', error);
+        console.error('[CardDetail] Error:', error);
         setCard(null);
         setLoading(false);
       }
@@ -90,7 +88,6 @@ export default function CardDetail() {
       try {
         return await base44.entities.SoldListing.filter({ card_id: cardId }, '-sale_date', 10);
       } catch (error) {
-        console.log('No sold listings found:', error);
         return [];
       }
     },
@@ -110,14 +107,12 @@ export default function CardDetail() {
         });
         setInWatchlist(items.length > 0);
       } catch (error) {
-        console.log('Error checking watchlist:', error);
         setInWatchlist(false);
       }
     };
     checkWatchlist();
-  }, [user?.email, cardId]);
+  }, [user?.email, cardId, card]);
 
-  // Prepare price history data
   const priceHistoryData = soldListings.map(listing => ({
     date: listing.sale_date,
     price: listing.sale_price
@@ -178,7 +173,7 @@ export default function CardDetail() {
     );
   }
 
-  if (!card && !loading) {
+  if (!card) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
@@ -197,7 +192,6 @@ export default function CardDetail() {
   return (
     <div className="min-h-screen bg-zinc-950 py-8">
       <div className="max-w-6xl mx-auto px-6">
-        {/* Back button */}
         <Link 
           to={createPageUrl("Cards")}
           className="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-8 transition-colors"
@@ -207,7 +201,6 @@ export default function CardDetail() {
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Card Image */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -231,14 +224,12 @@ export default function CardDetail() {
             </div>
           </motion.div>
 
-          {/* Card Details */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            {/* Header */}
             <div>
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
@@ -268,7 +259,6 @@ export default function CardDetail() {
                 </div>
               </div>
 
-              {/* Badges */}
               <div className="flex flex-wrap gap-2">
                 {card.rarity && (
                   <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
@@ -289,7 +279,6 @@ export default function CardDetail() {
               </div>
             </div>
 
-            {/* Stats Card */}
             <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6">
               <h3 className="text-white font-semibold mb-4">Card Details</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -312,7 +301,6 @@ export default function CardDetail() {
               </div>
             </div>
 
-            {/* Attacks */}
             {card.attacks && card.attacks.length > 0 && (
               <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6">
                 <h3 className="text-white font-semibold mb-4">Attacks</h3>
@@ -334,7 +322,6 @@ export default function CardDetail() {
               </div>
             )}
 
-            {/* Price History Tabs */}
             <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 overflow-hidden">
               <Tabs defaultValue="history" className="w-full">
                 <TabsList className="w-full bg-zinc-800/50 rounded-none border-b border-zinc-800 p-0 h-auto">
@@ -364,7 +351,6 @@ export default function CardDetail() {
               </Tabs>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-4">
               <Button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400 font-semibold py-6 rounded-xl">
                 <Package className="h-5 w-5 mr-2" />
