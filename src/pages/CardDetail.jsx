@@ -22,8 +22,6 @@ export default function CardDetail() {
   const [inWatchlist, setInWatchlist] = useState(false);
   const [user, setUser] = useState(null);
 
-  console.log('[CardDetail] cardId from URL:', cardId);
-
   // Check user authentication
   useEffect(() => {
     const checkAuth = async () => {
@@ -46,7 +44,6 @@ export default function CardDetail() {
     }
     
     const fetchCard = async () => {
-      console.log('[CardDetail] Fetching card:', cardId);
       setLoading(true);
       try {
         let response = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`);
@@ -57,18 +54,15 @@ export default function CardDetail() {
         }
         
         if (!response.ok) {
-          console.error('[CardDetail] Card not found');
           setCard(null);
           setLoading(false);
           return;
         }
         
         const data = await response.json();
-        console.log('[CardDetail] Card loaded:', data.name);
         setCard(data);
         setLoading(false);
       } catch (error) {
-        console.error('[CardDetail] Error:', error);
         setCard(null);
         setLoading(false);
       }

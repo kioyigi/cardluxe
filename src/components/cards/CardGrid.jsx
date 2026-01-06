@@ -7,9 +7,7 @@ export default function CardGrid({ cards, loading }) {
   const navigate = useNavigate();
 
   const handleCardClick = (cardId) => {
-    console.log('[CardGrid] Navigating to card:', cardId);
     const url = `${createPageUrl("CardDetail")}?cardId=${encodeURIComponent(cardId)}`;
-    console.log('[CardGrid] Full URL:', url);
     navigate(url);
   };
 
