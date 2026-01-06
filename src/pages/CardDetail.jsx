@@ -25,19 +25,23 @@ export default function CardDetail() {
 
   // Check user authentication
   useEffect(() => {
+    let mounted = true;
     const checkAuth = async () => {
       try {
         const currentUser = await base44.auth.me();
-        setUser(currentUser);
+        if (mounted) setUser(currentUser);
       } catch (e) {
         // Not logged in
       }
     };
     checkAuth();
+    return () => { mounted = false; };
   }, []);
 
   // Fetch card details from TCGdex
   useEffect(() => {
+    let mounted = true;
+    
     const fetchCard = async () => {
       if (!cardId) return;
       
@@ -54,23 +58,30 @@ export default function CardDetail() {
         
         if (!response.ok) {
           console.error('Card not found');
-          setCard(null);
-          setLoading(false);
+          if (mounted) {
+            setCard(null);
+            setLoading(false);
+          }
           return;
         }
         
         const data = await response.json();
         console.log('Card loaded:', data);
-        setCard(data);
+        if (mounted) {
+          setCard(data);
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error fetching card:', error);
-        setCard(null);
-      } finally {
-        setLoading(false);
+        if (mounted) {
+          setCard(null);
+          setLoading(false);
+        }
       }
     };
 
     fetchCard();
+    return () => { mounted = false; };
   }, [cardId]);
 
   // Fetch sold listings for this card
@@ -78,20 +89,25 @@ export default function CardDetail() {
     queryKey: ['soldListings', cardId],
     queryFn: () => base44.entities.SoldListing.filter({ card_id: cardId }, '-sale_date', 10),
     enabled: !!cardId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   // Check if in watchlist
   useEffect(() => {
     const checkWatchlist = async () => {
-      if (!user || !cardId) return;
-      const items = await base44.entities.WatchlistItem.filter({ 
-        user_email: user.email, 
-        card_id: cardId 
-      });
-      setInWatchlist(items.length > 0);
+      if (!user || !cardId || !card) return;
+      try {
+        const items = await base44.entities.WatchlistItem.filter({ 
+          user_email: user.email, 
+          card_id: cardId 
+        });
+        setInWatchlist(items.length > 0);
+      } catch (error) {
+        console.error('Error checking watchlist:', error);
+      }
     };
     checkWatchlist();
-  }, [user, cardId]);
+  }, [user?.email, cardId, card?.id]);
 
   // Prepare price history data
   const priceHistoryData = soldListings.map(listing => ({
