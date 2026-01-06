@@ -17,7 +17,7 @@ export default function Cards() {
   const [loading, setLoading] = useState(true);
   
   const CARDS_PER_PAGE = 50;
-  const MAX_CARDS = 1000;
+  const MAX_CARDS = 2000;
 
   // Debounce search
   const debouncedSetSearch = useCallback(
@@ -44,22 +44,23 @@ export default function Cards() {
     const fetchCards = async () => {
       setLoading(true);
       try {
-        // Fetch from multiple popular sets to get 1000 cards
-        const popularSets = ['swsh1', 'swsh2', 'swsh3', 'swsh4', 'swsh5', 'sm1', 'sm2', 'sm3', 'xy1', 'bw1'];
+        // Fetch from multiple popular sets to get 2000 cards
+        const popularSets = ['swsh1', 'swsh2', 'swsh3', 'swsh4', 'swsh5', 'swsh6', 'swsh7', 'swsh8', 'sm1', 'sm2', 'sm3', 'sm4', 'xy1', 'xy2', 'bw1', 'bw2'];
         const allFetchedCards = [];
 
         for (const setId of popularSets) {
           if (allFetchedCards.length >= MAX_CARDS) break;
-          
+
           try {
             const response = await fetch(`https://api.tcgdex.net/v2/en/sets/${setId}`);
             const set = await response.json();
-            
+
             if (set.cards) {
               const cardsWithSet = set.cards.map(card => ({
                 ...card,
-                id: card.id || `${setId}-${card.localId}`, // Ensure proper ID format
-                set: { id: setId, name: set.name }
+                id: card.id || `${setId}-${card.localId}`,
+                set: { id: setId, name: set.name },
+                price: card.cardmarket?.prices?.averageSellPrice || 0
               }));
               allFetchedCards.push(...cardsWithSet);
             }
@@ -68,7 +69,12 @@ export default function Cards() {
           }
         }
 
-        setAllCards(allFetchedCards.slice(0, MAX_CARDS));
+        // Sort by highest price
+        const sortedCards = allFetchedCards
+          .sort((a, b) => b.price - a.price)
+          .slice(0, MAX_CARDS);
+
+        setAllCards(sortedCards);
       } catch (error) {
         console.error('Error fetching cards:', error);
       } finally {
