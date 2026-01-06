@@ -1,10 +1,18 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { motion } from 'framer-motion';
-import { Star, TrendingUp } from 'lucide-react';
 
-export default function CardGrid({ cards, loading, onCardClick }) {
+export default function CardGrid({ cards, loading }) {
+  const navigate = useNavigate();
+
+  const handleCardClick = (cardId) => {
+    console.log('[CardGrid] Navigating to card:', cardId);
+    const url = `${createPageUrl("CardDetail")}?cardId=${encodeURIComponent(cardId)}`;
+    console.log('[CardGrid] Full URL:', url);
+    navigate(url);
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -24,16 +32,13 @@ export default function CardGrid({ cards, loading, onCardClick }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.02, duration: 0.3 }}
         >
-          <Link
-            to={createPageUrl("CardDetail") + `?cardId=${encodeURIComponent(card.id)}`}
-            className="group block"
-            onClick={() => console.log('[CardGrid] Navigating to card:', card.id, 'Full URL:', createPageUrl("CardDetail") + `?cardId=${encodeURIComponent(card.id)}`)}
+          <div
+            onClick={() => handleCardClick(card.id)}
+            className="group block cursor-pointer"
           >
             <div className="relative aspect-[2.5/3.5] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all duration-300">
-              {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-t from-amber-500/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               
-              {/* Card image */}
               {card.image ? (
                 <img
                   src={card.image + "/high.webp"}
@@ -47,7 +52,6 @@ export default function CardGrid({ cards, loading, onCardClick }) {
                 </div>
               )}
 
-              {/* Overlay info */}
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                 <p className="text-white text-sm font-medium truncate">{card.name}</p>
                 {card.set && (
@@ -55,7 +59,6 @@ export default function CardGrid({ cards, loading, onCardClick }) {
                 )}
               </div>
 
-              {/* Rarity indicator */}
               {card.rarity && (
                 <div className="absolute top-2 right-2">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium backdrop-blur-sm ${
@@ -70,7 +73,7 @@ export default function CardGrid({ cards, loading, onCardClick }) {
                 </div>
               )}
             </div>
-          </Link>
+          </div>
         </motion.div>
       ))}
     </div>
