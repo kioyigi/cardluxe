@@ -77,10 +77,30 @@ function extractPokemonName(normalizedTitle, cardNumber) {
   
   const words = text.split(' ').filter(w => w.length > 0);
   
-  const stopWords = ['the', 'and', 'or'];
-  const filtered = words.filter(w => !stopWords.includes(w));
+  const cardTypes = ['ex', 'vmax', 'vstar', 'mega', 'gx', 'v', 'break', 'lvx', 'lv x', 'tag team', 'full art', 'alt art', 'illustration'];
+  const stopWords = ['the', 'and', 'or', 'edition', 'series'];
   
-  return filtered.slice(0, 3).join(' ').trim();
+  let pokemonName = '';
+  let cardType = '';
+  
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    
+    if (cardTypes.includes(word)) {
+      cardType = word;
+      break;
+    }
+    
+    if (!stopWords.includes(word) && pokemonName.split(' ').length < 2) {
+      pokemonName += (pokemonName ? ' ' : '') + word;
+    }
+  }
+  
+  if (cardType) {
+    return `${pokemonName} ${cardType}`.trim();
+  }
+  
+  return pokemonName.trim();
 }
 
 function generateCardKey(title) {
