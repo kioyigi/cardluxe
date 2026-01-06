@@ -41,7 +41,7 @@ export default function CardGrid({ cards, loading }) {
               
               {card.image ? (
                 <img
-                  src={card.image + "/high.webp"}
+                  src={card.image}
                   alt={card.name}
                   className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
