@@ -2,9 +2,9 @@ import AuctionDetail from './pages/AuctionDetail';
 import Auctions from './pages/Auctions';
 import CardDetail from './pages/CardDetail';
 import Cards from './pages/Cards';
+import HighlyActiveCards from './pages/HighlyActiveCards';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
-import HighlyActiveCards from './pages/HighlyActiveCards';
 import __Layout from './Layout.jsx';
 
 
@@ -13,9 +13,9 @@ export const PAGES = {
     "Auctions": Auctions,
     "CardDetail": CardDetail,
     "Cards": Cards,
+    "HighlyActiveCards": HighlyActiveCards,
     "Home": Home,
     "Profile": Profile,
-    "HighlyActiveCards": HighlyActiveCards,
 }
 
 export const pagesConfig = {

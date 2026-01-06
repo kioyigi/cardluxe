@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Flame, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 
 function calculateActivityScore(card) {
-  const frequencyScore = Math.log(1 + card.frequency_count);
+  const frequencyScore = Math.log(1 + (card.frequency_count || 0));
   
   const growthRate = card.previous_frequency > 0
     ? (card.frequency_count - card.previous_frequency) / card.previous_frequency
@@ -57,7 +57,7 @@ export default function HighlyActiveCards() {
     
     return cardsWithScores
       .sort((a, b) => b.activityScore - a.activityScore)
-      .slice(0, 100);
+      .slice(0, 500);
   }, [snapshots]);
 
   const lastUpdated = snapshots[0]?.timestamp 
@@ -161,10 +161,9 @@ export default function HighlyActiveCards() {
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="text-white font-medium">{card.card_name}</p>
-                          {card.card_number && (
-                            <p className="text-zinc-500 text-sm">{card.card_number}</p>
-                          )}
+                          <p className="text-white font-medium">
+                            {card.card_name} {card.card_number}
+                          </p>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
