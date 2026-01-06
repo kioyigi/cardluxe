@@ -73,6 +73,12 @@ function extractAndValidateCardNumber(title) {
   return null;
 }
 
+function toTitleCase(str) {
+  return str.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
+}
+
 function extractPokemonName(normalizedTitle, cardNumber) {
   let text = normalizedTitle;
   
@@ -80,9 +86,13 @@ function extractPokemonName(normalizedTitle, cardNumber) {
     text = text.replace(cardNumber.replace('/', '\\/'), '');
   }
   
+  // Remove any embedded card number patterns
+  text = text.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '');
+  text = text.replace(/\s+/g, ' ').trim();
+  
   const words = text.split(' ').filter(w => w.length > 0);
   
-  const cardTypes = ['ex', 'vmax', 'vstar', 'mega', 'gx', 'v', 'break', 'lvx', 'lv x', 'tag team', 'full art', 'alt art', 'illustration'];
+  const cardTypes = ['ex', 'vmax', 'vstar', 'mega', 'gx', 'v', 'break', 'lvx', 'lv x', 'tag team'];
   const ignoreWords = [
     'the', 'and', 'or', 'edition', 'series', 'single', 'trading',
     'game', 'official', 'original', 'genuine', 'real', 'not', 'fake',
@@ -94,27 +104,47 @@ function extractPokemonName(normalizedTitle, cardNumber) {
     'holo', 'holofoil', 'reverse', 'non', 'standard', 'etched', 'textured'
   ];
   
-  let pokemonName = '';
-  let cardType = '';
+  let baseName = '';
+  let variant = '';
   
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
     
     if (cardTypes.includes(word)) {
-      cardType = word;
+      variant = word;
       break;
     }
     
     if (!ignoreWords.includes(word)) {
-      pokemonName += (pokemonName ? ' ' : '') + word;
+      baseName += (baseName ? ' ' : '') + word;
     }
   }
   
-  if (cardType) {
-    return `${pokemonName} ${cardType}`.trim();
+  return { baseName: baseName.trim(), variant: variant.trim() };
+}
+
+function normalizeVariant(variant) {
+  if (!variant) return '';
+  const upper = variant.toUpperCase();
+  if (['VMAX', 'VSTAR', 'V', 'GX', 'MEGA', 'BREAK'].includes(upper)) {
+    return upper;
+  }
+  return variant.toLowerCase();
+}
+
+function formatDisplayName(baseName, variant, localId) {
+  const titleCasedName = toTitleCase(baseName);
+  const normalizedVariant = normalizeVariant(variant);
+  
+  let displayName = titleCasedName;
+  if (normalizedVariant) {
+    displayName += ' ' + normalizedVariant;
+  }
+  if (localId) {
+    displayName += ' ' + localId;
   }
   
-  return pokemonName.trim();
+  return displayName.trim();
 }
 
 function generateCardKey(title) {
@@ -184,15 +214,18 @@ async function searchEbay(accessToken, query, limit = 200) {
   return results;
 }
 
-async function fetchTCGdexImage(cardName, cardNumber, ebayTitle) {
+async function fetchTCGdexImage(baseName, variant, cardNumber, ebayTitle) {
   try {
-    if (!cardNumber || !cardName) return null;
+    if (!cardNumber || !baseName) return null;
     
     // Parse localId from card number (e.g., "013/094" -> "013")
     const localId = cardNumber.split('/')[0];
     
+    // Build search name (baseName + variant if present)
+    const searchName = variant ? `${baseName} ${variant}` : baseName;
+    
     // Search TCGdex by card name
-    const searchUrl = `https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(cardName)}`;
+    const searchUrl = `https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(searchName)}`;
     const response = await fetch(searchUrl);
     
     if (!response.ok) return null;
@@ -296,17 +329,19 @@ Deno.serve(async (req) => {
         if (!cardMap.has(cardKey)) {
           const cardNumber = extractAndValidateCardNumber(title);
           const normalized = normalizeTitle(title);
-          const pokemonName = extractPokemonName(normalized, cardNumber);
-          
+          const { baseName, variant } = extractPokemonName(normalized, cardNumber);
+          const localId = cardNumber;
+          const displayName = formatDisplayName(baseName, variant, localId);
+
           cardMap.set(cardKey, {
             card_key: cardKey,
-            card_name: pokemonName,
+            card_name: displayName,
             card_number: cardNumber,
             frequency_count: 0,
             auction_count: 0,
             total_count: 0,
             sampled_prices: [],
-            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(pokemonName + ' ' + cardNumber)}&_sacat=183454`,
+            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(baseName + ' ' + variant + ' ' + cardNumber)}&_sacat=183454`,
             original_title: title
           });
         }
@@ -330,7 +365,11 @@ Deno.serve(async (req) => {
       // Fetch TCGdex image - pass original title for set matching
       const originalTitle = Array.from(cardMap.entries())
         .find(([key, val]) => key === cardKey)?.[1]?.original_title || '';
-      const tcgdexData = await fetchTCGdexImage(data.card_name, data.card_number, originalTitle);
+      
+      // Extract baseName and variant for TCGdex search
+      const normalized = normalizeTitle(originalTitle);
+      const { baseName, variant } = extractPokemonName(normalized, data.card_number);
+      const tcgdexData = await fetchTCGdexImage(baseName, variant, data.card_number, originalTitle);
       
       snapshots.push({
         timestamp: now,
