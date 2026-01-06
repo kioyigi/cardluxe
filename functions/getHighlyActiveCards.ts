@@ -83,7 +83,16 @@ function extractPokemonName(normalizedTitle, cardNumber) {
   const words = text.split(' ').filter(w => w.length > 0);
   
   const cardTypes = ['ex', 'vmax', 'vstar', 'mega', 'gx', 'v', 'break', 'lvx', 'lv x', 'tag team', 'full art', 'alt art', 'illustration'];
-  const stopWords = ['the', 'and', 'or', 'edition', 'series'];
+  const ignoreWords = [
+    'the', 'and', 'or', 'edition', 'series', 'single', 'trading',
+    'game', 'official', 'original', 'genuine', 'real', 'not', 'fake',
+    'free', 'shipping', 'new', 'used', 'pre', 'owned', 'pack', 'fresh',
+    'from', 'booster', 'raw', 'ungraded', 'cracked', 'slab', 'pwcc',
+    'beautiful', 'perfect', 'amazing', 'stunning', 'gorgeous', 'rare',
+    'super', 'ultra', 'secret', 'full', 'art', 'alt', 'alternate',
+    'illustration', 'regular', 'special', 'delivery', 'promo', 'promotional',
+    'holo', 'holofoil', 'reverse', 'non', 'standard', 'etched', 'textured'
+  ];
   
   let pokemonName = '';
   let cardType = '';
@@ -96,7 +105,7 @@ function extractPokemonName(normalizedTitle, cardNumber) {
       break;
     }
     
-    if (!stopWords.includes(word) && pokemonName.split(' ').length < 2) {
+    if (!ignoreWords.includes(word)) {
       pokemonName += (pokemonName ? ' ' : '') + word;
     }
   }
