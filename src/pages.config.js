@@ -1,18 +1,18 @@
-import Home from './pages/Home';
-import Cards from './pages/Cards';
-import CardDetail from './pages/CardDetail';
-import Auctions from './pages/Auctions';
 import AuctionDetail from './pages/AuctionDetail';
+import Auctions from './pages/Auctions';
+import CardDetail from './pages/CardDetail';
+import Cards from './pages/Cards';
+import Home from './pages/Home';
 import Profile from './pages/Profile';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
-    "Cards": Cards,
-    "CardDetail": CardDetail,
-    "Auctions": Auctions,
     "AuctionDetail": AuctionDetail,
+    "Auctions": Auctions,
+    "CardDetail": CardDetail,
+    "Cards": Cards,
+    "Home": Home,
     "Profile": Profile,
 }
 

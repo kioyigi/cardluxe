@@ -54,6 +54,9 @@ export default function CardGrid({ cards, loading }) {
 
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
                 <p className="text-white text-sm font-medium truncate">{card.name}</p>
+                {card.price && (
+                  <p className="text-amber-400 text-xs font-bold">${card.price.toFixed(2)}</p>
+                )}
                 {card.set && (
                   <p className="text-zinc-400 text-xs truncate">{card.set.name}</p>
                 )}
@@ -69,6 +72,13 @@ export default function CardGrid({ cards, loading }) {
                         : 'bg-purple-500/80 text-white'
                   }`}>
                     {card.rarity}
+                  </span>
+                </div>
+              )}
+              {card.condition && (
+                <div className="absolute top-2 right-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium backdrop-blur-sm bg-blue-500/80 text-white">
+                    {card.condition}
                   </span>
                 </div>
               )}

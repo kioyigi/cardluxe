@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import CardGrid from '@/components/cards/CardGrid';
 import CardFilters from '@/components/cards/CardFilters';
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,6 @@ export default function Cards() {
   const [loading, setLoading] = useState(true);
   
   const CARDS_PER_PAGE = 50;
-  const MAX_CARDS = 2000;
 
   // Debounce search
   const debouncedSetSearch = useCallback(
@@ -29,61 +29,21 @@ export default function Cards() {
     debouncedSetSearch(searchQuery);
   }, [searchQuery, debouncedSetSearch]);
 
-  // Fetch sets for filter
-  const { data: sets = [] } = useQuery({
-    queryKey: ['tcgdex-sets'],
+  // Fetch cards from eBay
+  const { data: ebayData, isLoading: loading } = useQuery({
+    queryKey: ['ebay-cards'],
     queryFn: async () => {
-      const response = await fetch('https://api.tcgdex.net/v2/en/sets');
-      return response.json();
+      const response = await base44.functions.invoke('fetchEbayCards');
+      return response.data;
     },
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
-  // Fetch cards
   useEffect(() => {
-    const fetchCards = async () => {
-      setLoading(true);
-      try {
-        // Fetch from multiple popular sets to get 2000 cards
-        const popularSets = ['swsh1', 'swsh2', 'swsh3', 'swsh4', 'swsh5', 'swsh6', 'swsh7', 'swsh8', 'sm1', 'sm2', 'sm3', 'sm4', 'xy1', 'xy2', 'bw1', 'bw2'];
-        const allFetchedCards = [];
-
-        for (const setId of popularSets) {
-          if (allFetchedCards.length >= MAX_CARDS) break;
-
-          try {
-            const response = await fetch(`https://api.tcgdex.net/v2/en/sets/${setId}`);
-            const set = await response.json();
-
-            if (set.cards) {
-              const cardsWithSet = set.cards.map(card => ({
-                ...card,
-                id: card.id || `${setId}-${card.localId}`,
-                set: { id: setId, name: set.name },
-                price: card.cardmarket?.prices?.averageSellPrice || 0
-              }));
-              allFetchedCards.push(...cardsWithSet);
-            }
-          } catch (e) {
-            console.error(`Error fetching set ${setId}:`, e);
-          }
-        }
-
-        // Sort by highest price
-        const sortedCards = allFetchedCards
-          .sort((a, b) => b.price - a.price)
-          .slice(0, MAX_CARDS);
-
-        setAllCards(sortedCards);
-      } catch (error) {
-        console.error('Error fetching cards:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCards();
-  }, []);
+    if (ebayData?.cards) {
+      setAllCards(ebayData.cards);
+    }
+  }, [ebayData]);
 
   // Filter cards
   useEffect(() => {
@@ -98,14 +58,20 @@ export default function Cards() {
       );
     }
 
-    // Set filter
+    // Condition filter (replacing set filter for eBay)
     if (selectedSet && selectedSet !== 'all') {
-      filtered = filtered.filter(card => card.set?.id === selectedSet);
+      filtered = filtered.filter(card => card.condition === selectedSet);
     }
 
-    // Rarity filter
+    // Price range filter (replacing rarity filter for eBay)
     if (selectedRarity && selectedRarity !== 'all') {
-      filtered = filtered.filter(card => card.rarity === selectedRarity);
+      if (selectedRarity === 'high') {
+        filtered = filtered.filter(card => card.price >= 100);
+      } else if (selectedRarity === 'medium') {
+        filtered = filtered.filter(card => card.price >= 20 && card.price < 100);
+      } else if (selectedRarity === 'low') {
+        filtered = filtered.filter(card => card.price < 20);
+      }
     }
 
     setFilteredCards(filtered);
@@ -143,8 +109,14 @@ export default function Cards() {
             setSelectedSet={setSelectedSet}
             selectedRarity={selectedRarity}
             setSelectedRarity={setSelectedRarity}
-            sets={sets}
+            sets={[
+              { id: 'NEW', name: 'New' },
+              { id: 'LIKE_NEW', name: 'Like New' },
+              { id: 'VERY_GOOD', name: 'Very Good' },
+              { id: 'GOOD', name: 'Good' }
+            ]}
             onClear={clearFilters}
+            isEbay={true}
           />
         </div>
 
