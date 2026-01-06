@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,7 @@ function calculateMedianPrice(prices) {
 }
 
 export default function HighlyActiveCards() {
+  const queryClient = useQueryClient();
   const { data: snapshots = [], isLoading, refetch, isFetching } = useQuery({
     queryKey: ['highly-active-cards'],
     queryFn: () => base44.entities.Snapshot.filter({}, '-timestamp', 5000),
@@ -94,7 +95,10 @@ export default function HighlyActiveCards() {
               </p>
             </div>
             <Button
-              onClick={() => refetch()}
+              onClick={async () => {
+                await base44.functions.invoke('getHighlyActiveCards');
+                queryClient.invalidateQueries({ queryKey: ['highly-active-cards'] });
+              }}
               disabled={isFetching}
               variant="outline"
               className="border-zinc-700 text-zinc-400 hover:text-white"
