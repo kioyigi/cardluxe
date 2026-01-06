@@ -16,7 +16,10 @@ import {
 
 export default function CardDetail() {
   const [searchParams] = useSearchParams();
-  const cardId = searchParams.get('cardId');
+  const urlCardId = searchParams.get('cardId');
+  const storedCardId = sessionStorage.getItem('currentCardId');
+  const cardId = urlCardId || storedCardId;
+  
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);

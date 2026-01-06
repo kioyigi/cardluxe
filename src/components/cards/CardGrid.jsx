@@ -7,6 +7,8 @@ export default function CardGrid({ cards, loading }) {
   const navigate = useNavigate();
 
   const handleCardClick = (cardId) => {
+    // Store in sessionStorage as backup
+    sessionStorage.setItem('currentCardId', cardId);
     const url = `${createPageUrl("CardDetail")}?cardId=${encodeURIComponent(cardId)}`;
     navigate(url);
   };
