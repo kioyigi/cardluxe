@@ -6,10 +6,18 @@ import { motion } from 'framer-motion';
 export default function CardGrid({ cards, loading }) {
   const navigate = useNavigate();
 
-  const handleCardClick = (cardId) => {
-    // Store in sessionStorage as backup
-    sessionStorage.setItem('currentCardId', cardId);
-    const url = `${createPageUrl("CardDetail")}?cardId=${encodeURIComponent(cardId)}`;
+  const handleCardClick = (card) => {
+    // Store card data for eBay cards, cardId for TCGdex cards
+    if (card.buyItNowUrl) {
+      // eBay card
+      sessionStorage.setItem('currentCard', JSON.stringify(card));
+      sessionStorage.setItem('cardSource', 'ebay');
+    } else {
+      // TCGdex card
+      sessionStorage.setItem('currentCardId', card.id);
+      sessionStorage.setItem('cardSource', 'tcgdex');
+    }
+    const url = `${createPageUrl("CardDetail")}?cardId=${encodeURIComponent(card.id)}`;
     navigate(url);
   };
 
@@ -33,7 +41,7 @@ export default function CardGrid({ cards, loading }) {
           transition={{ delay: index * 0.02, duration: 0.3 }}
         >
           <div
-            onClick={() => handleCardClick(card.id)}
+            onClick={() => handleCardClick(card)}
             className="group block cursor-pointer"
           >
             <div className="relative aspect-[2.5/3.5] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-amber-500/50 transition-all duration-300">

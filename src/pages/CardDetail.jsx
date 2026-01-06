@@ -18,12 +18,15 @@ export default function CardDetail() {
   const [searchParams] = useSearchParams();
   const urlCardId = searchParams.get('cardId');
   const storedCardId = sessionStorage.getItem('currentCardId');
+  const cardSource = sessionStorage.getItem('cardSource');
+  const storedCard = sessionStorage.getItem('currentCard');
   const cardId = urlCardId || storedCardId;
   
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
   const [user, setUser] = useState(null);
+  const [isEbayCard, setIsEbayCard] = useState(false);
 
   // Check user authentication
   useEffect(() => {
@@ -38,7 +41,7 @@ export default function CardDetail() {
     checkAuth();
   }, []);
 
-  // Fetch card details from TCGdex
+  // Fetch card details from TCGdex or use stored eBay card
   useEffect(() => {
     if (!cardId) {
       setCard(null);
@@ -48,6 +51,22 @@ export default function CardDetail() {
     
     const fetchCard = async () => {
       setLoading(true);
+      
+      // Check if it's an eBay card
+      if (cardSource === 'ebay' && storedCard) {
+        try {
+          const ebayCard = JSON.parse(storedCard);
+          setCard(ebayCard);
+          setIsEbayCard(true);
+          setLoading(false);
+        } catch (error) {
+          setCard(null);
+          setLoading(false);
+        }
+        return;
+      }
+      
+      // Fetch from TCGdex
       try {
         let response = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`);
         
@@ -64,6 +83,7 @@ export default function CardDetail() {
         
         const data = await response.json();
         setCard(data);
+        setIsEbayCard(false);
         setLoading(false);
       } catch (error) {
         setCard(null);
@@ -72,9 +92,9 @@ export default function CardDetail() {
     };
 
     fetchCard();
-  }, [cardId]);
+  }, [cardId, cardSource, storedCard]);
 
-  // Fetch sold listings for this card
+  // Fetch sold listings for this card (only for TCGdex cards)
   const { data: soldListings = [], isLoading: loadingListings } = useQuery({
     queryKey: ['soldListings', cardId],
     queryFn: async () => {
@@ -84,7 +104,7 @@ export default function CardDetail() {
         return [];
       }
     },
-    enabled: !!cardId && !!card,
+    enabled: !!cardId && !!card && !isEbayCard,
     staleTime: 1000 * 60 * 5,
     retry: false,
   });
@@ -204,7 +224,7 @@ export default function CardDetail() {
               <div className="relative aspect-[2.5/3.5] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shadow-2xl">
                 {card.image ? (
                   <img
-                    src={card.image + "/high.webp"}
+                    src={isEbayCard ? card.image : card.image + "/high.webp"}
                     alt={card.name}
                     className="w-full h-full object-contain"
                   />
@@ -229,9 +249,16 @@ export default function CardDetail() {
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
                     {card.name}
                   </h1>
-                  <p className="text-zinc-400">
-                    {card.set?.name} • #{card.localId}
-                  </p>
+                  {!isEbayCard && (
+                    <p className="text-zinc-400">
+                      {card.set?.name} • #{card.localId}
+                    </p>
+                  )}
+                  {isEbayCard && card.price && (
+                    <p className="text-2xl font-bold text-amber-400 mt-2">
+                      ${card.price.toFixed(2)}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -253,48 +280,77 @@ export default function CardDetail() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {card.rarity && (
+                {!isEbayCard && card.rarity && (
                   <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
                     {card.rarity}
                   </Badge>
                 )}
-                {card.types?.map(type => (
+                {!isEbayCard && card.types?.map(type => (
                   <Badge key={type} variant="outline" className="border-zinc-700 text-zinc-300">
                     {getTypeIcon(type)}
                     <span className="ml-1">{type}</span>
                   </Badge>
                 ))}
-                {card.hp && (
+                {!isEbayCard && card.hp && (
                   <Badge variant="outline" className="border-zinc-700 text-zinc-300">
                     {card.hp} HP
+                  </Badge>
+                )}
+                {isEbayCard && card.condition && (
+                  <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                    {card.condition}
                   </Badge>
                 )}
               </div>
             </div>
 
             <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6">
-              <h3 className="text-white font-semibold mb-4">Card Details</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-zinc-500">Set</p>
-                  <p className="text-white">{card.set?.name || 'Unknown'}</p>
+              <h3 className="text-white font-semibold mb-4">
+                {isEbayCard ? 'Listing Details' : 'Card Details'}
+              </h3>
+              {!isEbayCard && (
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-zinc-500">Set</p>
+                    <p className="text-white">{card.set?.name || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">Card Number</p>
+                    <p className="text-white">{card.localId || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">Rarity</p>
+                    <p className="text-white">{card.rarity || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">Illustrator</p>
+                    <p className="text-white">{card.illustrator || 'Unknown'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-zinc-500">Card Number</p>
-                  <p className="text-white">{card.localId || 'N/A'}</p>
+              )}
+              {isEbayCard && (
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-zinc-500">Price</p>
+                    <p className="text-white">${card.price?.toFixed(2) || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">Condition</p>
+                    <p className="text-white">{card.condition || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">Seller</p>
+                    <p className="text-white">{card.seller || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-zinc-500">Currency</p>
+                    <p className="text-white">{card.currency || 'USD'}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-zinc-500">Rarity</p>
-                  <p className="text-white">{card.rarity || 'Unknown'}</p>
-                </div>
-                <div>
-                  <p className="text-zinc-500">Illustrator</p>
-                  <p className="text-white">{card.illustrator || 'Unknown'}</p>
-                </div>
-              </div>
+              )}
             </div>
 
-            {card.attacks && card.attacks.length > 0 && (
+            {!isEbayCard && card.attacks && card.attacks.length > 0 && (
               <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6">
                 <h3 className="text-white font-semibold mb-4">Attacks</h3>
                 <div className="space-y-4">
@@ -315,46 +371,66 @@ export default function CardDetail() {
               </div>
             )}
 
-            <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 overflow-hidden">
-              <Tabs defaultValue="history" className="w-full">
-                <TabsList className="w-full bg-zinc-800/50 rounded-none border-b border-zinc-800 p-0 h-auto">
-                  <TabsTrigger 
-                    value="history" 
-                    className="flex-1 py-4 rounded-none data-[state=active]:bg-transparent data-[state=active]:text-amber-400 data-[state=active]:border-b-2 data-[state=active]:border-amber-400"
-                  >
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Price History
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="listings"
-                    className="flex-1 py-4 rounded-none data-[state=active]:bg-transparent data-[state=active]:text-amber-400 data-[state=active]:border-b-2 data-[state=active]:border-amber-400"
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Recent Sales
-                  </TabsTrigger>
-                </TabsList>
-                <div className="p-6">
-                  <TabsContent value="history" className="mt-0">
-                    <PriceHistoryChart data={priceHistoryData} loading={loadingListings} />
-                  </TabsContent>
-                  <TabsContent value="listings" className="mt-0">
-                    <SoldListings listings={soldListings} loading={loadingListings} />
-                  </TabsContent>
-                </div>
-              </Tabs>
-            </div>
+            {!isEbayCard && (
+              <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 overflow-hidden">
+                <Tabs defaultValue="history" className="w-full">
+                  <TabsList className="w-full bg-zinc-800/50 rounded-none border-b border-zinc-800 p-0 h-auto">
+                    <TabsTrigger 
+                      value="history" 
+                      className="flex-1 py-4 rounded-none data-[state=active]:bg-transparent data-[state=active]:text-amber-400 data-[state=active]:border-b-2 data-[state=active]:border-amber-400"
+                    >
+                      <TrendingUp className="h-4 w-4 mr-2" />
+                      Price History
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="listings"
+                      className="flex-1 py-4 rounded-none data-[state=active]:bg-transparent data-[state=active]:text-amber-400 data-[state=active]:border-b-2 data-[state=active]:border-amber-400"
+                    >
+                      <Package className="h-4 w-4 mr-2" />
+                      Recent Sales
+                    </TabsTrigger>
+                  </TabsList>
+                  <div className="p-6">
+                    <TabsContent value="history" className="mt-0">
+                      <PriceHistoryChart data={priceHistoryData} loading={loadingListings} />
+                    </TabsContent>
+                    <TabsContent value="listings" className="mt-0">
+                      <SoldListings listings={soldListings} loading={loadingListings} />
+                    </TabsContent>
+                  </div>
+                </Tabs>
+              </div>
+            )}
+            {isEbayCard && (
+              <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-6">
+                <p className="text-zinc-400 text-center py-8">
+                  Price history and sales data are only available for TCGdex cards.
+                </p>
+              </div>
+            )}
 
             <div className="flex gap-4">
-              <Button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400 font-semibold py-6 rounded-xl">
-                <Package className="h-5 w-5 mr-2" />
-                Shop Now
-              </Button>
-              <Link to={createPageUrl("Auctions")} className="flex-1">
-                <Button variant="outline" className="w-full border-zinc-700 text-white hover:bg-zinc-800 py-6 rounded-xl">
-                  <Gavel className="h-5 w-5 mr-2" />
-                  View Auctions
+              {isEbayCard && card.buyItNowUrl ? (
+                <a href={card.buyItNowUrl} target="_blank" rel="noopener noreferrer" className="flex-1">
+                  <Button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400 font-semibold py-6 rounded-xl">
+                    <Package className="h-5 w-5 mr-2" />
+                    Buy on eBay
+                  </Button>
+                </a>
+              ) : (
+                <Button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400 font-semibold py-6 rounded-xl">
+                  <Package className="h-5 w-5 mr-2" />
+                  Shop Now
                 </Button>
-              </Link>
+              )}
+              {!isEbayCard && (
+                <Link to={createPageUrl("Auctions")} className="flex-1">
+                  <Button variant="outline" className="w-full border-zinc-700 text-white hover:bg-zinc-800 py-6 rounded-xl">
+                    <Gavel className="h-5 w-5 mr-2" />
+                    View Auctions
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         </div>
