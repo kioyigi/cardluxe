@@ -71,8 +71,8 @@ function extractAndValidateCardNumber(title) {
   const pattern = /\b\d{1,3}\/\d{2,3}\b/g;
   const matches = title.match(pattern);
   
-  // CRITICAL: Only accept if EXACTLY ONE card number pattern found
-  if (matches && matches.length === 1) {
+  // Return first valid card number pattern found
+  if (matches && matches.length > 0) {
     return matches[0];
   }
   
