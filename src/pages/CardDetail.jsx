@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +15,22 @@ import {
 } from 'lucide-react';
 
 export default function CardDetail() {
-  const [searchParams] = useSearchParams();
-  const cardId = searchParams.get('cardId');
-  
+  const location = useLocation();
+  const [cardId, setCardId] = useState(null);
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [inWatchlist, setInWatchlist] = useState(false);
   const [user, setUser] = useState(null);
 
-  console.log('[CardDetail] Render - cardId:', cardId);
+  // Extract and persist cardId from URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('cardId');
+    if (id) {
+      console.log('[CardDetail] Setting cardId:', id);
+      setCardId(id);
+    }
+  }, [location.search]);
 
   // Check user authentication
   useEffect(() => {
@@ -40,17 +47,14 @@ export default function CardDetail() {
 
   // Fetch card details from TCGdex
   useEffect(() => {
-    console.log('[CardDetail] useEffect - cardId:', cardId);
-    
     if (!cardId) {
-      console.log('[CardDetail] No cardId');
       setCard(null);
       setLoading(false);
       return;
     }
     
     const fetchCard = async () => {
-      console.log('[CardDetail] Fetching:', cardId);
+      console.log('[CardDetail] Fetching card:', cardId);
       setLoading(true);
       try {
         let response = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`);
@@ -177,7 +181,7 @@ export default function CardDetail() {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-zinc-400 text-lg mb-4">Card not found (cardId: {cardId})</p>
+          <p className="text-zinc-400 text-lg mb-4">Card not found</p>
           <Link to={createPageUrl("Cards")}>
             <Button variant="outline" className="border-zinc-700">
               <ArrowLeft className="h-4 w-4 mr-2" />
