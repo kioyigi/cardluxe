@@ -168,6 +168,38 @@ async function searchEbay(accessToken, query, limit = 200) {
   return results;
 }
 
+async function fetchTCGdexImage(cardName, cardNumber) {
+  try {
+    // Search TCGdex for the card
+    const searchUrl = `https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(cardName)}`;
+    const response = await fetch(searchUrl);
+    
+    if (!response.ok) return null;
+    
+    const cards = await response.json();
+    if (!cards || cards.length === 0) return null;
+    
+    // Find exact match by card number if available
+    let matchedCard = null;
+    if (cardNumber) {
+      matchedCard = cards.find(card => 
+        card.localId === cardNumber.split('/')[0] || 
+        card.id?.includes(cardNumber.replace('/', '-'))
+      );
+    }
+    
+    // Fallback to first result if no exact match
+    if (!matchedCard) matchedCard = cards[0];
+    
+    return {
+      tcgdex_card_id: matchedCard.id,
+      tcgdex_image_url: matchedCard.image ? `${matchedCard.image}/high.webp` : null
+    };
+  } catch (error) {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -239,6 +271,9 @@ Deno.serve(async (req) => {
       const auctionRatio = data.total_count > 0 ? (data.auction_count / data.total_count) : 0;
       const previousFrequency = previousMap.get(cardKey) || 0;
       
+      // Fetch TCGdex image
+      const tcgdexData = await fetchTCGdexImage(data.card_name, data.card_number);
+      
       snapshots.push({
         timestamp: now,
         card_key: data.card_key,
@@ -248,7 +283,9 @@ Deno.serve(async (req) => {
         auction_ratio: auctionRatio,
         sampled_prices: data.sampled_prices,
         search_url: data.search_url,
-        previous_frequency: previousFrequency
+        previous_frequency: previousFrequency,
+        tcgdex_card_id: tcgdexData?.tcgdex_card_id || null,
+        tcgdex_image_url: tcgdexData?.tcgdex_image_url || null
       });
     }
     

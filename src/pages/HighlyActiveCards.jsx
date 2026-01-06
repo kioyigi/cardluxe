@@ -133,6 +133,7 @@ export default function HighlyActiveCards() {
                 <thead className="bg-zinc-800/50 border-b border-zinc-700">
                   <tr>
                     <th className="px-6 py-4 text-left text-zinc-400 font-semibold text-sm">Rank</th>
+                    <th className="px-6 py-4 text-left text-zinc-400 font-semibold text-sm w-16"></th>
                     <th className="px-6 py-4 text-left text-zinc-400 font-semibold text-sm">Card</th>
                     <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Activity</th>
                     <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Frequency</th>
@@ -161,6 +162,19 @@ export default function HighlyActiveCards() {
                             }`} />
                           )}
                           <span className="text-white font-bold">{index + 1}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="w-12 h-16 rounded overflow-hidden bg-zinc-800 flex items-center justify-center">
+                          {card.tcgdex_image_url ? (
+                            <img 
+                              src={card.tcgdex_image_url} 
+                              alt={card.card_name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-zinc-600 text-xs">No img</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
