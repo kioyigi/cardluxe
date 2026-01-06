@@ -109,7 +109,11 @@ function extractPokemonName(normalizedTitle, cardNumber) {
     'journey', 'together', 'wallace', 'silver', 'tempest', 'prismatic',
     'evolutions', 'shocks', 'rocket', '151', 'clarity', 'charizard',
     'generation', 'team', 'champion', 'world', 'championships', 'league',
-    'prerelease', 'staff', 'winner', 'regional', 'national', 'international'
+    'prerelease', 'staff', 'winner', 'regional', 'national', 'international',
+    'sv', 'scarlet', 'violet', 'with', 's', 'swsh', 'xy', 'sm', 'bw', 'dp',
+    'ex', 'sword', 'shield', 'sun', 'moon', 'astral', 'radiance', 'paldea',
+    'paldean', 'fates', 'paradox', 'rift', 'temporal', 'forces', 'twilight',
+    'masquerade', 'obsidian', 'flames', 'fusion', 'strike', 'chilling', 'reign'
   ];
   
   let baseName = '';
