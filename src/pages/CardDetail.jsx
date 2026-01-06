@@ -43,11 +43,28 @@ export default function CardDetail() {
       
       setLoading(true);
       try {
-        const response = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`);
+        // Try fetching with the full card ID
+        let response = await fetch(`https://api.tcgdex.net/v2/en/cards/${cardId}`);
+        
+        // If not found and cardId contains a dash, try without set prefix
+        if (!response.ok && cardId.includes('-')) {
+          const [setId, localId] = cardId.split('-');
+          response = await fetch(`https://api.tcgdex.net/v2/en/sets/${setId}/${localId}`);
+        }
+        
+        if (!response.ok) {
+          console.error('Card not found');
+          setCard(null);
+          setLoading(false);
+          return;
+        }
+        
         const data = await response.json();
+        console.log('Card loaded:', data);
         setCard(data);
       } catch (error) {
         console.error('Error fetching card:', error);
+        setCard(null);
       } finally {
         setLoading(false);
       }
