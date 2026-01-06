@@ -95,8 +95,8 @@ export default function HighlyActiveCards() {
               </p>
             </div>
             <Button
-              onClick={async () => {
-                await base44.functions.invoke('getHighlyActiveCards');
+              onClick={() => {
+                base44.functions.invoke('getHighlyActiveCards');
                 queryClient.invalidateQueries({ queryKey: ['highly-active-cards'] });
               }}
               disabled={isFetching}

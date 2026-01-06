@@ -170,31 +170,38 @@ async function searchEbay(accessToken, query, limit = 200) {
 
 async function fetchTCGdexImage(cardName, cardNumber) {
   try {
-    // Search TCGdex for the card
-    const searchUrl = `https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(cardName)}`;
-    const response = await fetch(searchUrl);
+    if (!cardNumber) return null;
     
-    if (!response.ok) return null;
+    // Parse card number (e.g., "013/094" -> localId: "013")
+    const localId = cardNumber.split('/')[0];
     
-    const cards = await response.json();
-    if (!cards || cards.length === 0) return null;
+    // Search all sets for this specific card number
+    const setsResponse = await fetch('https://api.tcgdex.net/v2/en/sets');
+    if (!setsResponse.ok) return null;
     
-    // Find exact match by card number if available
-    let matchedCard = null;
-    if (cardNumber) {
-      matchedCard = cards.find(card => 
-        card.localId === cardNumber.split('/')[0] || 
-        card.id?.includes(cardNumber.replace('/', '-'))
-      );
+    const sets = await setsResponse.json();
+    if (!sets || sets.length === 0) return null;
+    
+    // Try to find the card in each set by localId
+    for (const set of sets) {
+      try {
+        const cardResponse = await fetch(`https://api.tcgdex.net/v2/en/sets/${set.id}/${localId}`);
+        if (cardResponse.ok) {
+          const card = await cardResponse.json();
+          if (card && card.image) {
+            return {
+              tcgdex_card_id: card.id,
+              tcgdex_image_url: `${card.image}/high.webp`
+            };
+          }
+        }
+      } catch (e) {
+        // Continue to next set
+        continue;
+      }
     }
     
-    // Fallback to first result if no exact match
-    if (!matchedCard) matchedCard = cards[0];
-    
-    return {
-      tcgdex_card_id: matchedCard.id,
-      tcgdex_image_url: matchedCard.image ? `${matchedCard.image}/high.webp` : null
-    };
+    return null;
   } catch (error) {
     return null;
   }
