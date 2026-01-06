@@ -12,12 +12,16 @@ export default function CardFilters({
   selectedRarity, 
   setSelectedRarity,
   sets,
-  onClear 
+  onClear,
+  isEbay = false
 }) {
-  const rarities = [
-    "Common", "Uncommon", "Rare", "Rare Holo", "Rare Holo EX", 
-    "Rare Holo GX", "Rare Holo V", "Rare Ultra", "Rare Secret"
-  ];
+  const rarities = isEbay 
+    ? ["high", "medium", "low"]
+    : ["Common", "Uncommon", "Rare", "Rare Holo", "Rare Holo EX", "Rare Holo GX", "Rare Holo V", "Rare Ultra", "Rare Secret"];
+  
+  const rarityLabels = isEbay
+    ? { high: "$100+", medium: "$20 - $100", low: "Under $20" }
+    : null;
 
   const hasFilters = searchQuery || selectedSet || selectedRarity;
 
@@ -35,13 +39,15 @@ export default function CardFilters({
           />
         </div>
 
-        {/* Set filter */}
+        {/* Set/Condition filter */}
         <Select value={selectedSet} onValueChange={setSelectedSet}>
           <SelectTrigger className="w-full md:w-48 bg-zinc-900 border-zinc-700 text-white">
-            <SelectValue placeholder="All Sets" />
+            <SelectValue placeholder={isEbay ? "All Conditions" : "All Sets"} />
           </SelectTrigger>
           <SelectContent className="bg-zinc-900 border-zinc-700">
-            <SelectItem value="all" className="text-white hover:bg-zinc-800">All Sets</SelectItem>
+            <SelectItem value="all" className="text-white hover:bg-zinc-800">
+              {isEbay ? "All Conditions" : "All Sets"}
+            </SelectItem>
             {sets?.map(set => (
               <SelectItem key={set.id} value={set.id} className="text-white hover:bg-zinc-800">
                 {set.name}
@@ -50,16 +56,18 @@ export default function CardFilters({
           </SelectContent>
         </Select>
 
-        {/* Rarity filter */}
+        {/* Rarity/Price filter */}
         <Select value={selectedRarity} onValueChange={setSelectedRarity}>
           <SelectTrigger className="w-full md:w-40 bg-zinc-900 border-zinc-700 text-white">
-            <SelectValue placeholder="All Rarities" />
+            <SelectValue placeholder={isEbay ? "All Prices" : "All Rarities"} />
           </SelectTrigger>
           <SelectContent className="bg-zinc-900 border-zinc-700">
-            <SelectItem value="all" className="text-white hover:bg-zinc-800">All Rarities</SelectItem>
+            <SelectItem value="all" className="text-white hover:bg-zinc-800">
+              {isEbay ? "All Prices" : "All Rarities"}
+            </SelectItem>
             {rarities.map(rarity => (
               <SelectItem key={rarity} value={rarity} className="text-white hover:bg-zinc-800">
-                {rarity}
+                {isEbay ? rarityLabels[rarity] : rarity}
               </SelectItem>
             ))}
           </SelectContent>
