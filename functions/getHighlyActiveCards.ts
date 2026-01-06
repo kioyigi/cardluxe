@@ -30,7 +30,14 @@ const EXCLUDE_KEYWORDS = [
 const CONDITION_FLUFF = [
   'nm', 'lp', 'mp', 'hp', 'damaged', 'mint', 'near', 'played',
   'authentic', 'rare', 'vintage', 'holo', 'reverse', 'tcg',
-  'pokemon', 'card', 'holofoil'
+  'pokemon', 'card', 'holofoil', 'phantasmal', 'pok', 'mon',
+  'black', 'star', 'battle', 'styles', 'promo', 'shining', 'fates',
+  'evolving', 'skies', 'brilliant', 'stars', 'fusion', 'strike',
+  'chilling', 'reign', 'vivid', 'voltage', 'darkness', 'ablaze',
+  'rebel', 'clash', 'sword', 'shield', 'sun', 'moon', 'xy', 'base',
+  'set', 'ultra', 'cosmic', 'eclipse', 'lost', 'thunder', 'unbroken',
+  'bonds', 'team', 'up', 'detective', 'hidden', 'celestial', 'storm',
+  'forbidden', 'light', 'crimson', 'invasion', 'unified', 'minds'
 ];
 
 function hasGradingKeyword(title) {
@@ -168,7 +175,7 @@ async function searchEbay(accessToken, query, limit = 200) {
   return results;
 }
 
-async function fetchTCGdexImage(cardName, cardNumber) {
+async function fetchTCGdexImage(cardName, cardNumber, ebayTitle) {
   try {
     if (!cardNumber || !cardName) return null;
     
@@ -184,13 +191,52 @@ async function fetchTCGdexImage(cardName, cardNumber) {
     const cards = await response.json();
     if (!cards || cards.length === 0) return null;
     
-    // Find card matching the localId
-    const matchedCard = cards.find(card => card.localId === localId);
+    // Filter cards by localId
+    const matchingCards = cards.filter(card => card.localId === localId);
     
-    if (matchedCard && matchedCard.image) {
+    if (matchingCards.length === 0) return null;
+    
+    // If exactly one match, return it
+    if (matchingCards.length === 1) {
+      const card = matchingCards[0];
       return {
-        tcgdex_card_id: matchedCard.id,
-        tcgdex_image_url: `${matchedCard.image}/high.webp`
+        tcgdex_card_id: card.id,
+        tcgdex_image_url: `${card.image}/high.webp`
+      };
+    }
+    
+    // Multiple matches - use set name overlap to find best match
+    const ebayTitleLower = ebayTitle.toLowerCase();
+    const ebayTokens = ebayTitleLower.split(/\s+/);
+    
+    let bestMatch = null;
+    let bestOverlapScore = 0;
+    
+    for (const card of matchingCards) {
+      if (!card.set?.name) continue;
+      
+      const setNameLower = card.set.name.toLowerCase();
+      const setTokens = setNameLower.split(/\s+/);
+      
+      // Count overlapping tokens
+      let overlapScore = 0;
+      for (const token of setTokens) {
+        if (ebayTokens.includes(token)) {
+          overlapScore++;
+        }
+      }
+      
+      if (overlapScore > bestOverlapScore) {
+        bestOverlapScore = overlapScore;
+        bestMatch = card;
+      }
+    }
+    
+    // Only return if we have a confident match (at least one overlapping token)
+    if (bestMatch && bestOverlapScore > 0) {
+      return {
+        tcgdex_card_id: bestMatch.id,
+        tcgdex_image_url: `${bestMatch.image}/high.webp`
       };
     }
     
@@ -251,7 +297,8 @@ Deno.serve(async (req) => {
             auction_count: 0,
             total_count: 0,
             sampled_prices: [],
-            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(pokemonName + ' ' + cardNumber)}&_sacat=183454`
+            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(pokemonName + ' ' + cardNumber)}&_sacat=183454`,
+            original_title: title
           });
         }
         
@@ -271,8 +318,10 @@ Deno.serve(async (req) => {
       const auctionRatio = data.total_count > 0 ? (data.auction_count / data.total_count) : 0;
       const previousFrequency = previousMap.get(cardKey) || 0;
       
-      // Fetch TCGdex image
-      const tcgdexData = await fetchTCGdexImage(data.card_name, data.card_number);
+      // Fetch TCGdex image - pass original title for set matching
+      const originalTitle = Array.from(cardMap.entries())
+        .find(([key, val]) => key === cardKey)?.[1]?.original_title || '';
+      const tcgdexData = await fetchTCGdexImage(data.card_name, data.card_number, originalTitle);
       
       snapshots.push({
         timestamp: now,
