@@ -105,7 +105,11 @@ function extractPokemonName(normalizedTitle, cardNumber) {
     'beautiful', 'perfect', 'amazing', 'stunning', 'gorgeous', 'rare',
     'super', 'ultra', 'secret', 'full', 'art', 'alt', 'alternate',
     'illustration', 'regular', 'special', 'delivery', 'promotional',
-    'holo', 'holofoil', 'reverse', 'non', 'standard', 'etched', 'textured'
+    'holo', 'holofoil', 'reverse', 'non', 'standard', 'etched', 'textured',
+    'journey', 'together', 'wallace', 'silver', 'tempest', 'prismatic',
+    'evolutions', 'shocks', 'rocket', '151', 'clarity', 'charizard',
+    'generation', 'team', 'champion', 'world', 'championships', 'league',
+    'prerelease', 'staff', 'winner', 'regional', 'national', 'international'
   ];
   
   let baseName = '';
@@ -136,8 +140,14 @@ function extractPokemonName(normalizedTitle, cardNumber) {
 function formatDisplayName(baseName, variant, localId) {
   if (!baseName) return '';
   
-  // Strip any embedded card numbers from baseName
-  const cleanBaseName = baseName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  // Strip any embedded card numbers from baseName (multiple passes to ensure removal)
+  let cleanBaseName = baseName;
+  let previousName = '';
+  while (cleanBaseName !== previousName) {
+    previousName = cleanBaseName;
+    cleanBaseName = cleanBaseName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  }
+  
   const titleCasedName = toTitleCase(cleanBaseName);
   
   // Build parts array
