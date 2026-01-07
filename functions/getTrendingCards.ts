@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const CSV_URL = 'https://raw.githubusercontent.com/kioyigi/cardluxe/refs/heads/main/Static/tcgdex_en_avg1_daily_min15.csv?token=GHSAT0AAAAAADSXO263AG5WTRKYT2NSLBRS2K64YCQ';
+const CSV_URL = 'https://raw.githubusercontent.com/kioyigi/cardluxe/refs/heads/main/Static/tcgdex_en_avg1_daily_min15.csv';
 
 function parseCSV(csvText) {
   const lines = csvText.trim().split('\n');
