@@ -459,7 +459,10 @@ function parseCard(title) {
       extractedType || catalogMatch.type, 
       fullFraction || localId
     );
-    
+
+    // Skip if displayName is empty (stopword-only name)
+    if (!displayName) return null;
+
     return {
       cardName: catalogMatch.name,
       cardType: extractedType || catalogMatch.type,
