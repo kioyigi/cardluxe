@@ -498,38 +498,37 @@ Deno.serve(async (req) => {
       for (const item of listings) {
         const title = item.title || '';
         
-        if (hasGradingKeyword(title) || hasExcludeKeyword(title)) continue;
+        // RAW-ONLY: Filter graded/slab listings first
+        if (hasGradingKeyword(title)) continue;
+        if (hasExcludeKeyword(title)) continue;
         if (!item.price?.value) continue;
         
-        const cardKey = generateCardKey(title);
+        // Parse card using catalog matching
+        const parsed = parseCard(title);
         
-        // CRITICAL: Skip if no valid single card number detected
-        if (!cardKey) continue;
+        // Skip if no valid match found
+        if (!parsed) continue;
         
         const price = parseFloat(item.price.value);
         const isAuction = item.buyingOptions?.includes('AUCTION') || false;
         
-        if (!cardMap.has(cardKey)) {
-          const cardNumber = extractAndValidateCardNumber(title);
-          const normalized = normalizeTitle(title);
-          const { baseName, variant } = extractPokemonName(normalized, cardNumber);
-          const localId = cardNumber;
-          const displayName = formatDisplayName(baseName, variant, localId);
-
-          cardMap.set(cardKey, {
-            card_key: cardKey,
-            card_name: displayName,
-            card_number: cardNumber,
+        if (!cardMap.has(parsed.cardKey)) {
+          cardMap.set(parsed.cardKey, {
+            card_key: parsed.cardKey,
+            card_name: parsed.displayName,
+            card_number: parsed.localId,
+            card_base_name: parsed.cardName,
+            card_type: parsed.cardType,
             frequency_count: 0,
             auction_count: 0,
             total_count: 0,
             sampled_prices: [],
-            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(baseName + ' ' + variant + ' ' + cardNumber)}&_sacat=183454`,
+            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parsed.cardName + ' ' + (parsed.cardType || '') + ' ' + parsed.localId)}&_sacat=183454`,
             original_title: title
           });
         }
         
-        const card = cardMap.get(cardKey);
+        const card = cardMap.get(parsed.cardKey);
         card.frequency_count++;
         card.total_count++;
         if (isAuction) card.auction_count++;
