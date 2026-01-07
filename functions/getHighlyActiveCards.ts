@@ -61,10 +61,7 @@ function normalizeTitle(title) {
   normalized = normalized.replace(/[^\w\s\/]/g, ' ');
   normalized = normalized.replace(/\s+/g, ' ').trim();
   
-  const words = normalized.split(' ');
-  const filtered = words.filter(word => !CONDITION_FLUFF.includes(word));
-  
-  return filtered.join(' ');
+  return normalized;
 }
 
 function extractAndValidateCardNumber(title) {
@@ -113,7 +110,16 @@ function extractPokemonName(normalizedTitle, cardNumber) {
     'sv', 'scarlet', 'violet', 'with', 's', 'swsh', 'xy', 'sm', 'bw', 'dp',
     'ex', 'sword', 'shield', 'sun', 'moon', 'astral', 'radiance', 'paldea',
     'paldean', 'fates', 'paradox', 'rift', 'temporal', 'forces', 'twilight',
-    'masquerade', 'obsidian', 'flames', 'fusion', 'strike', 'chilling', 'reign'
+    'masquerade', 'obsidian', 'flames', 'fusion', 'strike', 'chilling', 'reign',
+    'nm', 'lp', 'mp', 'hp', 'damaged', 'mint', 'near', 'played',
+    'authentic', 'vintage', 'tcg', 'pokemon', 'card', 'phantasmal', 'pok', 'mon',
+    'black', 'star', 'battle', 'styles', 'promo', 'shining', 
+    'brilliant', 'stars', 'darkness', 'ablaze',
+    'rebel', 'clash', 'base', 'set', 'cosmic', 'eclipse', 'lost', 'thunder', 'unbroken',
+    'bonds', 'up', 'detective', 'hidden', 'celestial', 'storm',
+    'forbidden', 'light', 'crimson', 'invasion', 'unified', 'minds',
+    '1x', '2x', '3x', '4x', '5x', '6x', '7x', '8x', '9x',
+    'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9'
   ];
   
   let baseName = '';
