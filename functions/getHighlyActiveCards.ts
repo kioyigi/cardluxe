@@ -196,67 +196,91 @@ function toTitleCase(str) {
   ).join(' ');
 }
 
-function extractPokemonName(normalizedTitle, cardNumber) {
-  let text = normalizedTitle;
+function extractLocalIdAndType(title) {
+  const normalized = title.toLowerCase();
   
-  // Remove ALL card number patterns first (including the validated one)
-  text = text.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '');
-  text = text.replace(/\s+/g, ' ').trim();
+  // Extract fraction localId (###/###)
+  const fractionPattern = /\b(\d{1,3})\s*\/\s*\d{2,3}\b/;
+  const fractionMatch = title.match(fractionPattern);
   
-  // Remove all known set names and IDs (case-insensitive)
-  for (const setIdentifier of ALL_SET_IDENTIFIERS) {
-    const regex = new RegExp(`\\b${setIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-    text = text.replace(regex, '');
+  let localId = null;
+  let fullFraction = null;
+  
+  if (fractionMatch) {
+    localId = fractionMatch[1]; // Left side
+    fullFraction = fractionMatch[0];
+  } else {
+    // Try single numeric (only if no fraction exists)
+    const singleNumPattern = /\b(\d{1,3})\b/g;
+    const numMatches = title.match(singleNumPattern);
+    if (numMatches && numMatches.length === 1) {
+      localId = numMatches[0];
+    }
   }
-  text = text.replace(/\s+/g, ' ').trim();
   
-  const words = text.split(' ').filter(w => w.length > 0);
-  
-  // Match against canonical card types (case-insensitive)
-  const cardTypesLower = CARD_TYPES.map(t => t.toLowerCase());
-  
-  const ignoreWords = [
-    'the', 'and', 'or', 'edition', 'series', 'single', 'trading',
-    'game', 'official', 'original', 'genuine', 'real', 'not', 'fake',
-    'free', 'shipping', 'new', 'used', 'pre', 'owned', 'pack', 'fresh',
-    'from', 'booster', 'raw', 'ungraded', 'cracked', 'slab', 'pwcc',
-    'beautiful', 'perfect', 'amazing', 'stunning', 'gorgeous',
-    'super', 'secret', 'full', 'art', 'alt', 'alternate',
-    'illustration', 'regular', 'special', 'delivery', 'promotional',
-    'holo', 'holofoil', 'reverse', 'non', 'standard', 'etched', 'textured',
-    'wallace', 'clarity',
-    'champion', 'world', 'championships', 'league',
-    'prerelease', 'staff', 'winner', 'regional', 'national', 'international',
-    'with', 's',
-    'nm', 'lp', 'mp', 'hp', 'damaged', 'mint', 'near', 'played',
-    'authentic', 'vintage', 'tcg', 'pokemon', 'card', 'pok', 'mon',
-    '1x', '2x', '3x', '4x', '5x', '6x', '7x', '8x', '9x',
-    'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9'
-  ];
-  
-  let baseName = '';
-  let variant = '';
-  
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    const wordLower = word.toLowerCase();
-    
-    // Check if word matches any canonical card type
-    const typeIndex = cardTypesLower.indexOf(wordLower);
-    if (typeIndex !== -1) {
-      variant = CARD_TYPES[typeIndex]; // Use canonical casing
+  // Extract variant/type (longest match first)
+  let extractedType = null;
+  for (const type of CANONICAL_TYPES) {
+    const regex = new RegExp(`\\b${type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (regex.test(normalized)) {
+      extractedType = type;
       break;
     }
+  }
+  
+  return { localId, fullFraction, extractedType };
+}
+
+function matchCardFromCatalog(title, localId, extractedType) {
+  if (!localId || !CARD_CATALOG.has(localId)) {
+    return null;
+  }
+  
+  const candidates = CARD_CATALOG.get(localId);
+  if (candidates.length === 0) return null;
+  
+  const titleLower = title.toLowerCase();
+  const titleTokens = titleLower.split(/\s+/);
+  
+  let bestMatch = null;
+  let bestScore = 0;
+  
+  for (const candidate of candidates) {
+    let score = 0;
     
-    if (!ignoreWords.includes(wordLower)) {
-      baseName += (baseName ? ' ' : '') + word;
+    // Name overlap scoring
+    const nameLower = candidate.name.toLowerCase();
+    if (titleLower.includes(nameLower)) {
+      score += 10;
+    } else {
+      // Token-based match
+      const nameTokens = nameLower.split(/\s+/);
+      for (const token of nameTokens) {
+        if (titleTokens.includes(token)) {
+          score += 2;
+        }
+      }
+    }
+    
+    // Type preference
+    if (extractedType && candidate.type) {
+      if (candidate.type.toLowerCase() === extractedType.toLowerCase()) {
+        score += 5;
+      }
+    }
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = candidate;
     }
   }
   
-  // Final cleanup: remove any lingering card numbers from baseName
-  baseName = baseName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  // Confidence gate: require minimum score
+  if (bestScore < 5) {
+    return null;
+  }
   
-  return { baseName: baseName.trim(), variant: variant.trim() };
+  return bestMatch;
 }
 
 function formatDisplayName(baseName, variant, localId) {
