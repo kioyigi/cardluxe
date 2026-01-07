@@ -15,25 +15,26 @@ const SEED_QUERIES = [
 ];
 
 const GRADING_KEYWORDS = [
-  'psa', 'bgs', 'cgc', 'sgc', 'beckett', 'graded', 'grade', 'gem mint', 
-  'pristine', 'slab', 'slabbed', 'encased', 'cert', 'certified', 
-  'subgrades', 'population', 'psa10', 'psa 10', 'bgs9.5', 'bgs 9.5', 
-  'cgc10', 'cgc 10', 'sgc10', 'sgc 10', '9.5', '10'
+  'psa', 'psa10', 'psa 10', 'bgs', 'bgs9.5', 'bgs 9.5', 'cgc', 'cgc10', 'cgc 10', 
+  'sgc', 'sgc10', 'sgc 10', 'beckett', 'graded', 'grade', 'gem mint', 'pristine', 
+  'slab', 'slabbed', 'encased', 'cert', 'certified', 'subgrade', 'subgrades', 
+  'population', 'pop report'
 ];
 
-const RARITY_STOPWORDS = [
+const JUNK_EXCLUDE_KEYWORDS = [
+  'lot', 'bundle', 'bulk', 'collection', 'set of', 'x4', 'x10', 'multiple',
+  'choose', 'pick', 'select', 'your choice', 'pack', 'booster', 'box', 'etb', 
+  'tin', 'case', 'proxy', 'custom', 'replica', 'reprint', 'random', 'mystery',
+  'code', 'digital', 'sleeves', 'toploader', 'handmade', 'per order', 
+  'in stock', 'japanese', 'korean', 'chinese', 's chinese', 'binder', 'deck', 'playmat'
+];
+
+const STOP_WORDS = [
   'rare', 'ultra rare', 'secret rare', 'hyper rare', 'double rare', 
   'illustration rare', 'special illustration rare', 'ir', 'sir', 'sr', 
-  'ur', 'hr', 'ar', 'ultra', 'secret', 'hyper', 'double', 'illustration',
-  'special'
-];
-
-const EXCLUDE_KEYWORDS = [
-  'lot', 'bundle', 'set of', 'choose', 'choose your', 'random', 'mystery',
-  'pack', 'booster', 'box', 'case', 'etb', 'code', 'digital', 'proxy',
-  'custom', 'reprint', 'replica', 'sleeves', 'toploader', 'handmade',
-  'per order', 'in stock', 'japanese', 'korean', 'chinese', 's chinese',
-  'binder', 'deck', 'playmat'
+  'ur', 'hr', 'ar', 'ultra', 'secret', 'hyper', 'double', 'illustration', 'special',
+  'holo', 'reverse', 'full art', 'alt art', 'promo', 'mint', 'nm', 'lp', 'mp', 
+  'hp', 'dmg', 'damaged', 'pokemon', 'pokémon', 'card', 'tcg', 'lot', 'bundle', 'choose'
 ];
 
 const CARD_TYPES = [
