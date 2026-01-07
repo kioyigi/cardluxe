@@ -331,44 +331,67 @@ function matchCardFromCatalog(title, localId, extractedType) {
   const candidates = CARD_CATALOG.get(localId);
   if (candidates.length === 0) return null;
   
-  const titleLower = title.toLowerCase();
-  const titleTokens = titleLower.split(/\s+/);
+  // Clean title - remove stopwords and normalize
+  let cleanTitle = title.toLowerCase();
+  cleanTitle = cleanTitle.replace(/[^\w\s]/g, ' ');
+  cleanTitle = cleanTitle.replace(/\s+/g, ' ');
+  
+  // Filter out stopwords
+  const titleTokens = cleanTitle.split(/\s+/).filter(token => {
+    return !STOP_WORDS.some(sw => sw.toLowerCase() === token);
+  });
   
   let bestMatch = null;
   let bestScore = 0;
+  let secondBestScore = 0;
   
   for (const candidate of candidates) {
     let score = 0;
     
-    // Name overlap scoring
+    // Check if candidate name is a stopword itself
     const nameLower = candidate.name.toLowerCase();
-    if (titleLower.includes(nameLower)) {
-      score += 10;
-    } else {
-      // Token-based match
-      const nameTokens = nameLower.split(/\s+/);
-      for (const token of nameTokens) {
-        if (titleTokens.includes(token)) {
-          score += 2;
-        }
+    if (STOP_WORDS.some(sw => sw.toLowerCase() === nameLower)) {
+      continue; // Skip stopword names like "Rare"
+    }
+    
+    // +10 if CardType matches extracted type
+    if (extractedType && candidate.type) {
+      if (candidate.type.toLowerCase() === extractedType.toLowerCase()) {
+        score += 10;
       }
     }
     
-    // Type preference
-    if (extractedType && candidate.type) {
-      if (candidate.type.toLowerCase() === extractedType.toLowerCase()) {
-        score += 5;
+    // +8 if candidate name appears in title (substring match)
+    if (cleanTitle.includes(nameLower)) {
+      score += 8;
+    }
+    
+    // +6 for token overlap
+    const nameTokens = nameLower.split(/\s+/);
+    let tokenOverlap = 0;
+    for (const nameToken of nameTokens) {
+      if (titleTokens.includes(nameToken)) {
+        tokenOverlap++;
       }
+    }
+    if (tokenOverlap > 0) {
+      score += Math.min(tokenOverlap * 2, 6);
     }
     
     if (score > bestScore) {
+      secondBestScore = bestScore;
       bestScore = score;
       bestMatch = candidate;
+    } else if (score > secondBestScore) {
+      secondBestScore = score;
     }
   }
   
-  // Confidence gate: require minimum score
-  if (bestScore < 5) {
+  // Confidence gate: require minimum score AND margin
+  const THRESHOLD = 12;
+  const MARGIN = 3;
+  
+  if (bestScore < THRESHOLD || (bestScore - secondBestScore) < MARGIN) {
     return null;
   }
   
