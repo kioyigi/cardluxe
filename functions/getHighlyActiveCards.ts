@@ -404,6 +404,7 @@ function formatDisplayName(cardName, cardType, localId) {
   // Clean name: remove any embedded card numbers and variant tokens
   let cleanName = cardName;
   cleanName = cleanName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  cleanName = cleanName.replace(/\b(TG|RC|H)\d{1,2}\b/gi, '').trim();
   
   // Remove variant tokens from name
   for (const type of CANONICAL_TYPES) {
@@ -413,11 +414,14 @@ function formatDisplayName(cardName, cardType, localId) {
   
   cleanName = cleanName.replace(/\s+/g, ' ').trim();
   
-  // Build canonical display: Name Type LocalId
+  // Build canonical display: Name | Type | LocalId
+  // Use "UNKNOWN" if cardType is empty to avoid double pipes
   const parts = [cleanName];
   
-  if (cardType) {
+  if (cardType && cardType.trim() !== '') {
     parts.push(cardType);
+  } else {
+    parts.push('UNKNOWN');
   }
   
   if (localId) {
