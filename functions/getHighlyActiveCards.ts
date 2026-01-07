@@ -241,9 +241,9 @@ function hasGradingKeyword(title) {
   return GRADING_KEYWORDS.some(kw => lower.includes(kw));
 }
 
-function hasExcludeKeyword(title) {
+function hasJunkKeyword(title) {
   const lower = title.toLowerCase();
-  return EXCLUDE_KEYWORDS.some(kw => lower.includes(kw));
+  return JUNK_EXCLUDE_KEYWORDS.some(kw => lower.includes(kw));
 }
 
 function normalizeTitle(title) {
