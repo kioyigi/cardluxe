@@ -548,10 +548,13 @@ Deno.serve(async (req) => {
       const originalTitle = Array.from(cardMap.entries())
         .find(([key, val]) => key === cardKey)?.[1]?.original_title || '';
       
-      // Extract baseName and variant for TCGdex search
-      const normalized = normalizeTitle(originalTitle);
-      const { baseName, variant } = extractPokemonName(normalized, data.card_number);
-      const tcgdexData = await fetchTCGdexImage(baseName, variant, data.card_number, originalTitle);
+      // Use parsed card data for TCGdex search
+      const tcgdexData = await fetchTCGdexImage(
+        data.card_base_name || '', 
+        data.card_type || '', 
+        data.card_number, 
+        originalTitle
+      );
       
       snapshots.push({
         timestamp: now,
