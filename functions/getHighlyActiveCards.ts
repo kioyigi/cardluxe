@@ -114,41 +114,116 @@ const CANONICAL_TYPES = [
 // Build card catalog lookup (localId -> entries)
 function buildCardCatalog() {
   const catalog = new Map();
-  const rawData = `Pikachu||58
-Charizard||4
+  const rawData = `Alakazam||1
 Blastoise||2
-Venusaur||15
-Mewtwo||10
-Raichu||14
-Alakazam||1
+Chansey||3
+Charizard||4
+Clefairy||5
 Gyarados||6
-Dragonite||4
-Gengar||5
-Mew||8
-Snorlax||11
-Lapras||10
-Articuno||2
-Zapdos||15
-Moltres||12
-Eevee||51
-Vaporeon||12
-Jolteon||4
-Flareon||3
-Machamp||8
 Hitmonchan||7
-Scyther||10
+Machamp||8
+Magneton||9
+Mewtwo||10
+Nidoking||11
+Ninetales||12
+Poliwrath||13
+Raichu||14
+Venusaur||15
+Zapdos||16
+Beedrill||17
+Dragonair||18
+Dugtrio||19
 Electabuzz||20
-Magmar||36
+Electrode||21
+Pidgeotto||22
+Arcanine||23
+Charmeleon||24
+Dewgong||25
+Dratini||26
+Farfetch'd||27
+Growlithe||28
+Haunter||29
+Ivysaur||30
 Jynx||31
-Mr. Mime||6`;
+Kadabra||32
+Kakuna||33
+Machoke||34
+Magikarp||35
+Magmar||36
+Nidorino||37
+Poliwhirl||38
+Porygon||39
+Raticate||40
+Seel||41
+Wartortle||42
+Abra||43
+Bulbasaur||44
+Caterpie||45
+Charmander||46
+Diglett||47
+Doduo||48
+Drowzee||49
+Gastly||50
+Koffing||51
+Machop||52
+Magnemite||53
+Metapod||54
+Nidoran♂||55
+Onix||56
+Pidgey||57
+Pikachu||58
+Poliwag||59
+Ponyta||60
+Rattata||61
+Sandshrew||62
+Squirtle||63
+Starmie||64
+Staryu||65
+Tangela||66
+Voltorb||67
+Vulpix||68
+Weedle||69
+Clefairy Doll||70
+Computer Search||71
+Devolution Spray||72
+Impostor Professor Oak||73
+Item Finder||74
+Lass||75
+Pokémon Breeder||76
+Pokémon Trader||77
+Scoop Up||78
+Super Energy Removal||79
+Defender||80
+Energy Retrieval||81
+Full Heal||82
+Maintenance||83
+PlusPower||84
+Pokémon Center||85
+Pokémon Flute||86
+Pokédex||87
+Professor Oak||88
+Revive||89
+Super Potion||90
+Bill||91
+Energy Removal||92
+Gust of Wind||93
+Potion||94
+Switch||95
+Double Colorless Energy||96
+Fighting Energy||97
+Fire Energy||98
+Grass Energy||99
+Lightning Energy||100
+Psychic Energy||101
+Water Energy||102`;
 
   const lines = rawData.trim().split('\n');
   for (const line of lines) {
     const parts = line.split('||');
-    if (parts.length >= 3) {
+    if (parts.length >= 2) {
       const name = parts[0].trim();
-      const type = parts[1].trim();
-      const localId = parts[2].trim();
+      const type = parts[1] ? parts[1].trim() : '';
+      const localId = parts[2] ? parts[2].trim() : parts[1].trim();
       
       if (!catalog.has(localId)) {
         catalog.set(localId, []);
