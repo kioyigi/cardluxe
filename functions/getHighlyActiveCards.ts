@@ -283,31 +283,32 @@ function matchCardFromCatalog(title, localId, extractedType) {
   return bestMatch;
 }
 
-function formatDisplayName(baseName, variant, localId) {
-  if (!baseName) return '';
+function formatDisplayName(cardName, cardType, localId) {
+  if (!cardName) return '';
   
-  // Strip any embedded card numbers from baseName (multiple passes to ensure removal)
-  let cleanBaseName = baseName;
-  let previousName = '';
-  while (cleanBaseName !== previousName) {
-    previousName = cleanBaseName;
-    cleanBaseName = cleanBaseName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  // Clean name: remove any embedded card numbers and variant tokens
+  let cleanName = cardName;
+  cleanName = cleanName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
+  
+  // Remove variant tokens from name
+  for (const type of CANONICAL_TYPES) {
+    const regex = new RegExp(`\\b${type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    cleanName = cleanName.replace(regex, '').trim();
   }
   
-  const titleCasedName = toTitleCase(cleanBaseName);
+  cleanName = cleanName.replace(/\s+/g, ' ').trim();
   
-  // Build parts array
-  const parts = [titleCasedName];
+  // Build canonical display: Name Type LocalId
+  const parts = [cleanName];
   
-  if (variant) {
-    parts.push(variant); // Use canonical casing from CARD_TYPES
+  if (cardType) {
+    parts.push(cardType);
   }
   
   if (localId) {
     parts.push(localId);
   }
   
-  // Join with pipe separator
   return parts.join(' | ');
 }
 
