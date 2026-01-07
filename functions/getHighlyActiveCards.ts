@@ -104,18 +104,61 @@ const ALL_SET_IDENTIFIERS = [
   "Bisharp", "Noivern", "Pikachu Libre", "Suicune", "Sylveon", "Wigglytuff"
 ];
 
-const CONDITION_FLUFF = [
-  'nm', 'lp', 'mp', 'hp', 'damaged', 'mint', 'near', 'played',
-  'authentic', 'rare', 'vintage', 'holo', 'reverse', 'tcg',
-  'pokemon', 'card', 'holofoil', 'phantasmal', 'pok', 'mon',
-  'black', 'star', 'battle', 'styles', 'promo', 'shining', 'fates',
-  'evolving', 'skies', 'brilliant', 'stars', 'fusion', 'strike',
-  'chilling', 'reign', 'vivid', 'voltage', 'darkness', 'ablaze',
-  'rebel', 'clash', 'sword', 'shield', 'sun', 'moon', 'xy', 'base',
-  'set', 'ultra', 'cosmic', 'eclipse', 'lost', 'thunder', 'unbroken',
-  'bonds', 'team', 'up', 'detective', 'hidden', 'celestial', 'storm',
-  'forbidden', 'light', 'crimson', 'invasion', 'unified', 'minds'
+// Canonical card type matching (order matters - longest first for matching)
+const CANONICAL_TYPES = [
+  'TAG TEAM', 'VMAX', 'VSTAR', 'MEGA', 'LV.X', 'BREAK', 'PRIME', 
+  'LEGEND', 'GX', 'EX', 'ex', 'V', 'SP'
 ];
+
+// Build card catalog lookup (localId -> entries)
+function buildCardCatalog() {
+  const catalog = new Map();
+  const rawData = `Pikachu||58
+Charizard||4
+Blastoise||2
+Venusaur||15
+Mewtwo||10
+Raichu||14
+Alakazam||1
+Gyarados||6
+Dragonite||4
+Gengar||5
+Mew||8
+Snorlax||11
+Lapras||10
+Articuno||2
+Zapdos||15
+Moltres||12
+Eevee||51
+Vaporeon||12
+Jolteon||4
+Flareon||3
+Machamp||8
+Hitmonchan||7
+Scyther||10
+Electabuzz||20
+Magmar||36
+Jynx||31
+Mr. Mime||6`;
+
+  const lines = rawData.trim().split('\n');
+  for (const line of lines) {
+    const parts = line.split('||');
+    if (parts.length >= 3) {
+      const name = parts[0].trim();
+      const type = parts[1].trim();
+      const localId = parts[2].trim();
+      
+      if (!catalog.has(localId)) {
+        catalog.set(localId, []);
+      }
+      catalog.get(localId).push({ name, type, localId });
+    }
+  }
+  return catalog;
+}
+
+const CARD_CATALOG = buildCardCatalog();
 
 function hasGradingKeyword(title) {
   const lower = title.toLowerCase();
