@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,14 @@ export default function HighlyActiveCards() {
     initialData: [],
     staleTime: 1000 * 60 * 30,
   });
+
+  useEffect(() => {
+    if (!isLoading && trendingCards.length === 0) {
+      base44.functions.invoke('getTrendingCards').then(() => {
+        queryClient.invalidateQueries({ queryKey: ['trending-cards'] });
+      });
+    }
+  }, [isLoading, trendingCards.length, queryClient]);
 
   const lastUpdated = trendingCards[0]?.last_updated 
     ? new Date(trendingCards[0].last_updated).toLocaleString()
@@ -91,7 +99,6 @@ export default function HighlyActiveCards() {
                     <th className="px-6 py-4 text-left text-zinc-400 font-semibold text-sm">Card</th>
                     <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Type</th>
                     <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Rarity</th>
-                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Activity Score</th>
                     <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Price</th>
                     <th className="px-6 py-4 text-right text-zinc-400 font-semibold text-sm">Action</th>
                   </tr>
@@ -144,11 +151,6 @@ export default function HighlyActiveCards() {
                       <td className="px-6 py-4 text-center">
                         <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
                           {card.card_rarity || 'Unknown'}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-                          ${card.activity_score.toFixed(2)}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-center text-white font-semibold">
