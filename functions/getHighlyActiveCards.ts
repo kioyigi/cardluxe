@@ -1,120 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
-const SEED_QUERIES = [
-  'pokemon single card',
-  'pokemon alt art',
-  'pokemon illustration rare',
-  'pokemon secret rare',
-  'pokemon trainer full art',
-  'pokemon ex',
-  'pokemon v',
-  'pokemon vmax',
-  'pokemon vstar',
-  'pokemon charizard',
-  'pokemon pikachu'
-];
-
-const GRADING_KEYWORDS = [
-  'psa', 'psa10', 'psa 10', 'bgs', 'bgs9.5', 'bgs 9.5', 'cgc', 'cgc10', 'cgc 10', 
-  'sgc', 'sgc10', 'sgc 10', 'beckett', 'graded', 'grade', 'gem mint', 'pristine', 
-  'slab', 'slabbed', 'encased', 'cert', 'certified', 'subgrade', 'subgrades', 
-  'population', 'pop report'
-];
-
-const JUNK_EXCLUDE_KEYWORDS = [
-  'lot', 'bundle', 'bulk', 'collection', 'set of', 'x4', 'x10', 'multiple',
-  'choose', 'pick', 'select', 'your choice', 'pack', 'booster', 'box', 'etb', 
-  'tin', 'case', 'proxy', 'custom', 'replica', 'reprint', 'random', 'mystery',
-  'code', 'digital', 'sleeves', 'toploader', 'handmade', 'per order', 
-  'in stock', 'japanese', 'korean', 'chinese', 's chinese', 'binder', 'deck', 'playmat'
-];
-
-const STOP_WORDS = [
-  'rare', 'ultra rare', 'secret rare', 'hyper rare', 'double rare', 
-  'illustration rare', 'special illustration rare', 'ir', 'sir', 'sr', 
-  'ur', 'hr', 'ar', 'ultra', 'secret', 'hyper', 'double', 'illustration', 'special',
-  'holo', 'reverse', 'full art', 'alt art', 'promo', 'mint', 'nm', 'lp', 'mp', 
-  'hp', 'dmg', 'damaged', 'pokemon', 'pokémon', 'card', 'tcg', 'lot', 'bundle', 'choose'
-];
-
-const CARD_TYPES = [
-  'VMAX', 'VSTAR', 'V', 'EX', 'ex', 'GX', 'TAG TEAM', 'MEGA', 
-  'LV.X', 'BREAK', 'PRIME', 'LEGEND', 'SP', 'Tera', 'Radiant', 
-  'Shining', 'Amazing Rare', 'Ultra Beast', 'Promo', 'Trainer Gallery'
-];
-
-// Comprehensive list of all set names and IDs from TCGdex
-const ALL_SET_IDENTIFIERS = [
-  // Set IDs
-  '2011bw', '2012bw', '2014xy', '2015xy', '2016xy', '2017sm', '2018sm', '2019sm', '2021swsh',
-  'a1', 'a1a', 'a2', 'a2a', 'a2b', 'a3', 'a3a', 'a3b', 'a4', 'a4a', 'b1', 'b1a', 'p-a',
-  'base1', 'base2', 'base3', 'base4', 'base5', 'basep', 'bog',
-  'bw1', 'bw10', 'bw11', 'bw2', 'bw3', 'bw4', 'bw5', 'bw6', 'bw7', 'bw8', 'bw9', 'bwp',
-  'cel25', 'col1', 'dc1', 'det1',
-  'dp1', 'dp2', 'dp3', 'dp4', 'dp5', 'dp6', 'dp7', 'dpp', 'dv1',
-  'ecard1', 'ecard2', 'ecard3',
-  'ex1', 'ex2', 'ex3', 'ex4', 'ex5', 'ex5.5', 'ex6', 'ex7', 'ex8', 'ex9', 'ex10', 'ex11', 'ex12', 'ex13', 'ex14', 'ex15', 'ex16', 'exu',
-  'fut2020', 'g1', 'gym1', 'gym2',
-  'hgss1', 'hgss2', 'hgss3', 'hgss4', 'hgssp',
-  'jumbo', 'lc', 'me01', 'me02', 'mep',
-  'neo1', 'neo2', 'neo3', 'neo4', 'np',
-  'pl1', 'pl2', 'pl3', 'pl4',
-  'pop1', 'pop2', 'pop3', 'pop4', 'pop5', 'pop6', 'pop7', 'pop8', 'pop9',
-  'rc', 'ru1', 'si1',
-  'sm1', 'sm2', 'sm3', 'sm3.5', 'sm4', 'sm5', 'sm6', 'sm7', 'sm7.5', 'sm8', 'sm9', 'sm10', 'sm11', 'sm115', 'sm12', 'sma', 'smp',
-  'sp',
-  'sv01', 'sv02', 'sv03', 'sv03.5', 'sv04', 'sv04.5', 'sv05', 'sv06', 'sv06.5', 'sv07', 'sv08', 'sv08.5', 'sv09', 'sv10', 'sv10.5b', 'sv10.5w', 'svp',
-  'swsh1', 'swsh2', 'swsh3', 'swsh3.5', 'swsh4', 'swsh4.5', 'swsh5', 'swsh6', 'swsh7', 'swsh8', 'swsh9', 'swsh10', 'swsh10.5', 'swsh11', 'swsh12', 'swsh12.5', 'swshp',
-  'wp', 'xy0', 'xy1', 'xy2', 'xy3', 'xy4', 'xy5', 'xy6', 'xy7', 'xy8', 'xy9', 'xy10', 'xy11', 'xy12', 'xya', 'xyp',
-  // Full set names
-  "Macdonald's Collection", "Genetic Apex", "Mythical Island", "Space-Time Smackdown",
-  "Triumphant Light", "Shining Revelry", "Celestial Guardians", "Extradimensional Crisis",
-  "Eevee Grove", "Wisdom of Sea and Sky", "Secluded Springs", "Mega Rising", "Crimson Blaze",
-  "Promos-A", "Base Set", "Jungle", "Fossil", "Team Rocket", "Wizards Black Star Promos",
-  "Best of game", "Black & White", "Plasma Blast", "Legendary Treasures", "Emerging Powers",
-  "Noble Victories", "Next Destinies", "Dark Explorers", "Dragons Exalted", "Boundaries Crossed",
-  "Plasma Storm", "Plasma Freeze", "BW Black Star Promos", "Celebrations", "Call of Legends",
-  "Double Crisis", "Detective Pikachu", "Diamond & Pearl", "Mysterious Treasures", "Secret Wonders",
-  "Great Encounters", "Majestic Dawn", "Legends Awakened", "Stormfront", "DP Black Star Promos",
-  "Dragon Vault", "Expedition Base Set", "Aquapolis", "Skyridge", "Ruby & Sapphire",
-  "Unseen Forces", "Delta Species", "Legend Maker", "Holon Phantoms", "Crystal Guardians",
-  "Dragon Frontiers", "Power Keepers", "Sandstorm", "Dragon", "Team Magma vs Team Aqua",
-  "Hidden Legends", "Poké Card Creator Pack", "FireRed & LeafGreen", "Team Rocket Returns",
-  "Deoxys", "Emerald", "Unseen Forces Unown Collection", "Pokémon Futsal", "Generations",
-  "Gym Heroes", "Gym Challenge", "HeartGold SoulSilver", "Unleashed", "Undaunted", "Triumphant",
-  "HGSS Black Star Promos", "Jumbo cards", "Legendary Collection", "Mega Evolution",
-  "Phantasmal Flames", "MEP Black Star Promos", "Neo Genesis", "Neo Discovery", "Neo Revelation",
-  "Neo Destiny", "Nintendo Black Star Promos", "Platinum", "Rising Rivals", "Supreme Victors",
-  "Arceus", "POP Series", "Radiant Collection", "Pokémon Rumble", "Southern Islands",
-  "Sun & Moon", "Unbroken Bonds", "Unified Minds", "Hidden Fates", "Cosmic Eclipse",
-  "Guardians Rising", "Burning Shadows", "Shining Legends", "Crimson Invasion", "Ultra Prism",
-  "Forbidden Light", "Celestial Storm", "Dragon Majesty", "Lost Thunder", "Team Up",
-  "Yellow A Alternate", "SM Black Star Promos", "Sample", "Scarlet & Violet", "Paldea Evolved",
-  "Obsidian Flames", "Paradox Rift", "Paldean Fates", "Temporal Forces", "Twilight Masquerade",
-  "Shrouded Fable", "Stellar Crown", "Surging Sparks", "Prismatic Evolutions", "Journey Together",
-  "Destined Rivals", "Black Bolt", "White Flare", "SVP Black Star Promos", "Sword & Shield",
-  "Astral Radiance", "Pokémon GO", "Lost Origin", "Silver Tempest", "Crown Zenith",
-  "Rebel Clash", "Darkness Ablaze", "Champion's Path", "Vivid Voltage", "Shining Fates",
-  "Battle Styles", "Chilling Reign", "Evolving Skies", "Fusion Strike", "Brilliant Stars",
-  "SWSH Black Star Promos", "BW trainer Kit", "DP trainer Kit", "EX trainer Kit",
-  "HS trainer Kit", "SM trainer Kit", "XY trainer Kit", "W Promotional", "Kalos Starter Set",
-  "Fates Collide", "Steam Siege", "Evolutions", "Flashfire", "Furious Fists", "Phantom Forces",
-  "Primal Clash", "Roaring Skies", "Ancient Origins", "BREAKthrough", "BREAKpoint",
-  "Yello A Alternate", "XY Black Star Promos", "Excadrill", "Zoroark", "Lucario", "Manaphy",
-  "Latias", "Latios", "Minun", "Plusle", "Gyarados", "Raichu", "Lycanroc", "Alolan Raichu",
-  "Bisharp", "Noivern", "Pikachu Libre", "Suicune", "Sylveon", "Wigglytuff"
-];
-
-// Canonical card type matching (order matters - longest first for matching)
-const CANONICAL_TYPES = [
-  'TAG TEAM', 'VMAX', 'VSTAR', 'MEGA', 'LV.X', 'BREAK', 'PRIME', 
-  'LEGEND', 'GX', 'EX', 'ex', 'V', 'SP'
-];
-
-// Build card catalog lookup (localId -> entries)
-function buildCardCatalog() {
-  const catalog = new Map();
-  const rawData = `Alakazam||1
+// Card catalog data
+const CARD_CATALOG_RAW = `Alakazam||1
 Blastoise||2
 Chansey||3
 Charizard||4
@@ -217,7 +104,79 @@ Lightning Energy||100
 Psychic Energy||101
 Water Energy||102`;
 
-  const lines = rawData.trim().split('\n');
+// Valid card types
+const VALID_TYPES = [
+  'VMAX', 'VSTAR', 'V', 'EX', 'ex', 'GX', 'TAG TEAM', 'MEGA', 
+  'LV.X', 'BREAK', 'PRIME', 'LEGEND', 'SP', 'Tera', 'Radiant', 
+  'Shining', 'Amazing Rare', 'Ultra Beast', 'Promo', 'Trainer Gallery'
+];
+
+// Valid Pokémon names (subset for testing - full list would be loaded)
+const VALID_POKEMON_NAMES = [
+  'Bulbasaur', 'Ivysaur', 'Venusaur', 'Charmander', 'Charmeleon', 'Charizard',
+  'Squirtle', 'Wartortle', 'Blastoise', 'Caterpie', 'Metapod', 'Butterfree',
+  'Weedle', 'Kakuna', 'Beedrill', 'Pidgey', 'Pidgeotto', 'Pidgeot',
+  'Rattata', 'Raticate', 'Spearow', 'Fearow', 'Ekans', 'Arbok',
+  'Pikachu', 'Raichu', 'Sandshrew', 'Sandslash', 'Nidoran F', 'Nidorina',
+  'Nidoqueen', 'Nidoran M', 'Nidorino', 'Nidoking', 'Clefairy', 'Clefable',
+  'Vulpix', 'Ninetales', 'Jigglypuff', 'Wigglytuff', 'Zubat', 'Golbat',
+  'Oddish', 'Gloom', 'Vileplume', 'Paras', 'Parasect', 'Venonat',
+  'Venomoth', 'Diglett', 'Dugtrio', 'Meowth', 'Persian', 'Psyduck',
+  'Golduck', 'Mankey', 'Primeape', 'Growlithe', 'Arcanine', 'Poliwag',
+  'Poliwhirl', 'Poliwrath', 'Abra', 'Kadabra', 'Alakazam', 'Machop',
+  'Machoke', 'Machamp', 'Bellsprout', 'Weepinbell', 'Victreebel', 'Tentacool',
+  'Tentacruel', 'Geodude', 'Graveler', 'Golem', 'Ponyta', 'Rapidash',
+  'Slowpoke', 'Slowbro', 'Magnemite', 'Magneton', 'Farfetchd', 'Doduo',
+  'Dodrio', 'Seel', 'Dewgong', 'Grimer', 'Muk', 'Shellder',
+  'Cloyster', 'Gastly', 'Haunter', 'Gengar', 'Onix', 'Drowzee',
+  'Hypno', 'Krabby', 'Kingler', 'Voltorb', 'Electrode', 'Exeggcute',
+  'Exeggutor', 'Cubone', 'Marowak', 'Hitmonlee', 'Hitmonchan', 'Lickitung',
+  'Koffing', 'Weezing', 'Rhyhorn', 'Rhydon', 'Chansey', 'Tangela',
+  'Kangaskhan', 'Horsea', 'Seadra', 'Goldeen', 'Seaking', 'Staryu',
+  'Starmie', 'Mr Mime', 'Scyther', 'Jynx', 'Electabuzz', 'Magmar',
+  'Pinsir', 'Tauros', 'Magikarp', 'Gyarados', 'Lapras', 'Ditto',
+  'Eevee', 'Vaporeon', 'Jolteon', 'Flareon', 'Porygon', 'Omanyte',
+  'Omastar', 'Kabuto', 'Kabutops', 'Aerodactyl', 'Snorlax', 'Articuno',
+  'Zapdos', 'Moltres', 'Dratini', 'Dragonair', 'Dragonite', 'Mewtwo', 'Mew',
+  'Maractus', 'Shuckle', 'Toedscruel', 'Shadow Rider Calyrex', 'Moltres Zapdos Articuno'
+];
+
+// Grading/slab keywords (RAW-only filter)
+const GRADING_KEYWORDS = [
+  'psa', 'psa10', 'psa 10', 'bgs', 'bgs9.5', 'bgs 9.5', 'cgc', 'cgc10', 'cgc 10',
+  'sgc', 'sgc10', 'sgc 10', 'beckett', 'graded', 'grade', 'gem mint', 'pristine',
+  'slab', 'slabbed', 'encased', 'cert', 'certified', 'subgrade', 'subgrades',
+  'population', 'pop report'
+];
+
+// Junk/non-single listings
+const JUNK_KEYWORDS = [
+  'lot', 'bundle', 'bulk', 'collection', 'set of', 'x4', 'x10', 'multiple',
+  'choose', 'pick', 'select', 'your choice', 'pack', 'booster', 'box', 'etb',
+  'tin', 'case', 'proxy', 'custom', 'replica', 'reprint', 'random', 'mystery',
+  'code', 'digital', 'sleeves', 'toploader', 'handmade', 'per order',
+  'in stock', 'japanese', 'korean', 'chinese', 's chinese', 'binder', 'deck', 'playmat'
+];
+
+const SEED_QUERIES = [
+  'pokemon single card',
+  'pokemon alt art',
+  'pokemon illustration rare',
+  'pokemon secret rare',
+  'pokemon trainer full art',
+  'pokemon ex',
+  'pokemon v',
+  'pokemon vmax',
+  'pokemon vstar',
+  'pokemon charizard',
+  'pokemon pikachu'
+];
+
+// Build catalog lookup (localId -> card entries)
+function buildCatalog() {
+  const catalog = new Map();
+  const lines = CARD_CATALOG_RAW.trim().split('\n');
+  
   for (const line of lines) {
     const parts = line.split('||');
     if (parts.length >= 2) {
@@ -231,115 +190,105 @@ Water Energy||102`;
       catalog.get(localId).push({ name, type, localId });
     }
   }
+  
   return catalog;
 }
 
-const CARD_CATALOG = buildCardCatalog();
+const CARD_CATALOG = buildCatalog();
 
-function hasGradingKeyword(title) {
+function hasKeyword(title, keywords) {
   const lower = title.toLowerCase();
-  return GRADING_KEYWORDS.some(kw => lower.includes(kw));
+  return keywords.some(kw => lower.includes(kw));
 }
 
-function hasJunkKeyword(title) {
-  const lower = title.toLowerCase();
-  return JUNK_EXCLUDE_KEYWORDS.some(kw => lower.includes(kw));
-}
-
-function normalizeTitle(title) {
-  let normalized = title.toLowerCase();
-  normalized = normalized.replace(/[^\w\s\/]/g, ' ');
-  normalized = normalized.replace(/\s+/g, ' ').trim();
+// Extract card number (prioritize fractions)
+function extractCardNumber(title) {
+  // Fraction pattern (###/###)
+  const fractionPattern = /\b(\d{1,3})\s*\/\s*(\d{2,3})\b/g;
+  const fractionMatches = [...title.matchAll(fractionPattern)];
   
-  return normalized;
-}
-
-function extractAndValidateCardNumber(title) {
-  const pattern = /\b\d{1,3}\/\d{2,3}\b/g;
-  const matches = title.match(pattern);
+  // Special patterns (TG##, RC##, H##)
+  const specialPattern = /\b(TG|RC|H)(\d{1,2})\b/gi;
+  const specialMatches = [...title.matchAll(specialPattern)];
   
-  // Return first valid card number pattern found
-  if (matches && matches.length > 0) {
-    return matches[0];
+  // Single number
+  const singlePattern = /\b(\d{1,3})\b/g;
+  const singleMatches = [...title.matchAll(singlePattern)];
+  
+  // Check ambiguity
+  if (fractionMatches.length > 1 || specialMatches.length > 1) {
+    return null; // Ambiguous
+  }
+  
+  if (fractionMatches.length === 1) {
+    return {
+      leftNumber: fractionMatches[0][1],
+      fullNumber: fractionMatches[0][0]
+    };
+  }
+  
+  if (specialMatches.length === 1) {
+    const full = specialMatches[0][0];
+    return {
+      leftNumber: specialMatches[0][1] + specialMatches[0][2],
+      fullNumber: full
+    };
+  }
+  
+  if (singleMatches.length === 1) {
+    const num = singleMatches[0][1];
+    return {
+      leftNumber: num,
+      fullNumber: num
+    };
+  }
+  
+  if (singleMatches.length > 1) {
+    return null; // Ambiguous
   }
   
   return null;
 }
 
-function toTitleCase(str) {
-  return str.split(' ').map(word => 
-    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-  ).join(' ');
-}
-
-function extractLocalIdAndType(title) {
-  const normalized = title.toLowerCase();
+// Extract Pokémon name from title (whitelist-only)
+function extractPokemonName(title) {
+  const titleLower = title.toLowerCase();
   
-  // Extract fraction localId (###/###)
-  const fractionPattern = /\b(\d{1,3})\s*\/\s*(\d{2,3})\b/g;
-  const fractionMatches = [...title.matchAll(fractionPattern)];
-  
-  // Special patterns: TG##, RC##, H##
-  const specialPattern = /\b(TG|RC|H)(\d{1,2})\b/gi;
-  const specialMatches = [...title.matchAll(specialPattern)];
-  
-  // Single numeric pattern
-  const singleNumPattern = /\b(\d{1,3})\b/g;
-  const singleMatches = [...title.matchAll(singleNumPattern)];
-  
-  let localId = null;
-  let fullFraction = null;
-  
-  // Check for ambiguity: multiple fractions or special patterns
-  if (fractionMatches.length > 1 || specialMatches.length > 1) {
-    return { localId: null, fullFraction: null, extractedType: null };
-  }
-  
-  if (fractionMatches.length === 1) {
-    localId = fractionMatches[0][1]; // Left side number
-    fullFraction = fractionMatches[0][0]; // Full fraction
-  } else if (specialMatches.length === 1) {
-    localId = specialMatches[0][1] + specialMatches[0][2]; // e.g., "TG12"
-    fullFraction = specialMatches[0][0];
-  } else if (singleMatches.length === 1) {
-    // Only one numeric token found
-    localId = singleMatches[0][1];
-    fullFraction = null;
-  } else if (singleMatches.length > 1) {
-    // Multiple numeric tokens - ambiguous
-    return { localId: null, fullFraction: null, extractedType: null };
-  }
-  
-  // Extract variant/type (longest match first)
-  let extractedType = null;
-  for (const type of CANONICAL_TYPES) {
-    const regex = new RegExp(`\\b${type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-    if (regex.test(normalized)) {
-      extractedType = type;
-      break;
+  for (const name of VALID_POKEMON_NAMES) {
+    const nameLower = name.toLowerCase();
+    const regex = new RegExp(`\\b${nameLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (regex.test(titleLower)) {
+      return name;
     }
   }
   
-  return { localId, fullFraction, extractedType };
+  return null;
 }
 
-function matchCardFromCatalog(title, localId, extractedType) {
-  if (!localId || !CARD_CATALOG.has(localId)) {
+// Extract card type from title (whitelist-only)
+function extractCardType(title) {
+  const titleLower = title.toLowerCase();
+  
+  // Longest match first
+  for (const type of VALID_TYPES) {
+    const typeLower = type.toLowerCase();
+    const regex = new RegExp(`\\b${typeLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (regex.test(titleLower)) {
+      return type;
+    }
+  }
+  
+  return null;
+}
+
+// Match card to catalog
+function matchToCatalog(pokemonName, cardType, leftNumber) {
+  if (!leftNumber || !CARD_CATALOG.has(leftNumber)) {
     return null;
   }
   
-  const candidates = CARD_CATALOG.get(localId);
+  const candidates = CARD_CATALOG.get(leftNumber);
   if (candidates.length === 0) return null;
-  
-  // Clean title - remove stopwords and normalize
-  let cleanTitle = title.toLowerCase();
-  cleanTitle = cleanTitle.replace(/[^\w\s]/g, ' ');
-  cleanTitle = cleanTitle.replace(/\s+/g, ' ');
-  
-  // Filter out stopwords
-  const titleTokens = cleanTitle.split(/\s+/).filter(token => {
-    return !STOP_WORDS.some(sw => sw.toLowerCase() === token);
-  });
   
   let bestMatch = null;
   let bestScore = 0;
@@ -348,34 +297,19 @@ function matchCardFromCatalog(title, localId, extractedType) {
   for (const candidate of candidates) {
     let score = 0;
     
-    // Check if candidate name is a stopword itself
-    const nameLower = candidate.name.toLowerCase();
-    if (STOP_WORDS.some(sw => sw.toLowerCase() === nameLower)) {
-      continue; // Skip stopword names like "Rare"
+    // +10 if name matches
+    if (pokemonName && candidate.name.toLowerCase() === pokemonName.toLowerCase()) {
+      score += 10;
     }
     
-    // +10 if CardType matches extracted type
-    if (extractedType && candidate.type) {
-      if (candidate.type.toLowerCase() === extractedType.toLowerCase()) {
-        score += 10;
-      }
-    }
-    
-    // +8 if candidate name appears in title (substring match)
-    if (cleanTitle.includes(nameLower)) {
+    // +8 if type matches
+    if (cardType && candidate.type && candidate.type.toLowerCase() === cardType.toLowerCase()) {
       score += 8;
     }
     
-    // +6 for token overlap
-    const nameTokens = nameLower.split(/\s+/);
-    let tokenOverlap = 0;
-    for (const nameToken of nameTokens) {
-      if (titleTokens.includes(nameToken)) {
-        tokenOverlap++;
-      }
-    }
-    if (tokenOverlap > 0) {
-      score += Math.min(tokenOverlap * 2, 6);
+    // +5 if name is substring match
+    if (pokemonName && candidate.name.toLowerCase().includes(pokemonName.toLowerCase())) {
+      score += 5;
     }
     
     if (score > bestScore) {
@@ -387,8 +321,8 @@ function matchCardFromCatalog(title, localId, extractedType) {
     }
   }
   
-  // Confidence gate: require minimum score AND margin
-  const THRESHOLD = 12;
+  // Confidence gate
+  const THRESHOLD = 8;
   const MARGIN = 3;
   
   if (bestScore < THRESHOLD || (bestScore - secondBestScore) < MARGIN) {
@@ -398,82 +332,42 @@ function matchCardFromCatalog(title, localId, extractedType) {
   return bestMatch;
 }
 
-function formatDisplayName(cardName, cardType, localId) {
-  if (!cardName) return '';
+// Format canonical display name
+function formatCanonicalName(catalogCard, extractedType, fullNumber) {
+  const name = catalogCard.name;
+  const type = extractedType || catalogCard.type || 'UNKNOWN';
+  const number = fullNumber;
   
-  // Clean name: remove any embedded card numbers and variant tokens
-  let cleanName = cardName;
-  cleanName = cleanName.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '').trim();
-  cleanName = cleanName.replace(/\b(TG|RC|H)\d{1,2}\b/gi, '').trim();
-  
-  // Remove variant tokens from name
-  for (const type of CANONICAL_TYPES) {
-    const regex = new RegExp(`\\b${type.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
-    cleanName = cleanName.replace(regex, '').trim();
-  }
-  
-  // Remove all stop words from the name
-  const nameTokens = cleanName.split(/\s+/);
-  const filteredTokens = nameTokens.filter(token => {
-    return !STOP_WORDS.some(sw => sw.toLowerCase() === token.toLowerCase());
-  });
-  cleanName = filteredTokens.join(' ').trim();
-  
-  // If name becomes empty after filtering, return empty string to skip this card
-  if (!cleanName) return '';
-  
-  cleanName = cleanName.replace(/\s+/g, ' ').trim();
-  
-  // Build canonical display: Name | Type | LocalId
-  // Use "UNKNOWN" if cardType is empty to avoid double pipes
-  const parts = [cleanName];
-  
-  if (cardType && cardType.trim() !== '') {
-    parts.push(cardType);
-  } else {
-    parts.push('UNKNOWN');
-  }
-  
-  if (localId) {
-    parts.push(localId);
-  }
-  
-  return parts.join(' | ');
+  return `${name}|${type}|${number}`;
 }
 
-function parseCard(title) {
-  // Extract localId and type from title
-  const { localId, fullFraction, extractedType } = extractLocalIdAndType(title);
+// Parse eBay listing title
+function parseListingTitle(title) {
+  // Extract card number first (anchor)
+  const cardNumber = extractCardNumber(title);
+  if (!cardNumber) return null;
   
-  if (!localId) {
-    return null; // No valid card number found
-  }
+  // Extract Pokémon name (whitelist)
+  const pokemonName = extractPokemonName(title);
+  if (!pokemonName) return null;
   
-  // Try matching against catalog
-  const catalogMatch = matchCardFromCatalog(title, localId, extractedType);
+  // Extract card type (whitelist)
+  const cardType = extractCardType(title);
   
-  if (catalogMatch) {
-    // Use catalog data
-    const displayName = formatDisplayName(
-      catalogMatch.name, 
-      extractedType || catalogMatch.type, 
-      fullFraction || localId
-    );
-
-    // Skip if displayName is empty (stopword-only name)
-    if (!displayName) return null;
-
-    return {
-      cardName: catalogMatch.name,
-      cardType: extractedType || catalogMatch.type,
-      localId: fullFraction || localId,
-      displayName,
-      cardKey: `${catalogMatch.name}|${extractedType || catalogMatch.type}|${localId}`
-    };
-  }
+  // Match to catalog
+  const catalogMatch = matchToCatalog(pokemonName, cardType, cardNumber.leftNumber);
+  if (!catalogMatch) return null;
   
-  // Fallback: no catalog match, return null (better than wrong data)
-  return null;
+  // Format canonical display
+  const displayName = formatCanonicalName(catalogMatch, cardType, cardNumber.fullNumber);
+  
+  return {
+    displayName,
+    cardKey: displayName,
+    pokemonName: catalogMatch.name,
+    cardType: cardType || catalogMatch.type,
+    cardNumber: cardNumber.fullNumber
+  };
 }
 
 async function getEbayToken() {
@@ -529,17 +423,13 @@ async function searchEbay(accessToken, query, limit = 200) {
   return results;
 }
 
-async function fetchTCGdexImage(baseName, variant, cardNumber, ebayTitle) {
+async function fetchTCGdexImage(pokemonName, cardType, cardNumber, ebayTitle) {
   try {
-    if (!cardNumber || !baseName) return null;
+    if (!cardNumber || !pokemonName) return null;
     
-    // Parse localId from card number (e.g., "013/094" -> "013")
     const localId = cardNumber.split('/')[0];
+    const searchName = cardType ? `${pokemonName} ${cardType}` : pokemonName;
     
-    // Build search name (baseName + variant if present)
-    const searchName = variant ? `${baseName} ${variant}` : baseName;
-    
-    // Search TCGdex by card name
     const searchUrl = `https://api.tcgdex.net/v2/en/cards?name=${encodeURIComponent(searchName)}`;
     const response = await fetch(searchUrl);
     
@@ -548,12 +438,10 @@ async function fetchTCGdexImage(baseName, variant, cardNumber, ebayTitle) {
     const cards = await response.json();
     if (!cards || cards.length === 0) return null;
     
-    // Filter cards by localId
     const matchingCards = cards.filter(card => card.localId === localId);
     
     if (matchingCards.length === 0) return null;
     
-    // If exactly one match, return it
     if (matchingCards.length === 1) {
       const card = matchingCards[0];
       return {
@@ -562,7 +450,7 @@ async function fetchTCGdexImage(baseName, variant, cardNumber, ebayTitle) {
       };
     }
     
-    // Multiple matches - use set name overlap to find best match
+    // Multiple matches - use set name overlap
     const ebayTitleLower = ebayTitle.toLowerCase();
     const ebayTokens = ebayTitleLower.split(/\s+/);
     
@@ -575,7 +463,6 @@ async function fetchTCGdexImage(baseName, variant, cardNumber, ebayTitle) {
       const setNameLower = card.set.name.toLowerCase();
       const setTokens = setNameLower.split(/\s+/);
       
-      // Count overlapping tokens
       let overlapScore = 0;
       for (const token of setTokens) {
         if (ebayTokens.includes(token)) {
@@ -589,7 +476,6 @@ async function fetchTCGdexImage(baseName, variant, cardNumber, ebayTitle) {
       }
     }
     
-    // Only return if we have a confident match (at least one overlapping token)
     if (bestMatch && bestOverlapScore > 0) {
       return {
         tcgdex_card_id: bestMatch.id,
@@ -630,14 +516,14 @@ Deno.serve(async (req) => {
       for (const item of listings) {
         const title = item.title || '';
         
-        // RAW-ONLY: Filter graded/slab listings first
-        if (hasGradingKeyword(title)) continue;
-        // Filter junk listings (lots, bundles, sealed product, etc.)
-        if (hasJunkKeyword(title)) continue;
+        // RAW-ONLY: Filter graded/slab listings
+        if (hasKeyword(title, GRADING_KEYWORDS)) continue;
+        // Filter junk listings
+        if (hasKeyword(title, JUNK_KEYWORDS)) continue;
         if (!item.price?.value) continue;
         
-        // Parse card using catalog matching
-        const parsed = parseCard(title);
+        // Parse card using whitelist-based matching
+        const parsed = parseListingTitle(title);
         
         // Skip if no valid match found
         if (!parsed) continue;
@@ -649,14 +535,14 @@ Deno.serve(async (req) => {
           cardMap.set(parsed.cardKey, {
             card_key: parsed.cardKey,
             card_name: parsed.displayName,
-            card_number: parsed.localId,
-            card_base_name: parsed.cardName,
+            card_number: parsed.cardNumber,
+            card_base_name: parsed.pokemonName,
             card_type: parsed.cardType,
             frequency_count: 0,
             auction_count: 0,
             total_count: 0,
             sampled_prices: [],
-            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parsed.cardName + ' ' + (parsed.cardType || '') + ' ' + parsed.localId)}&_sacat=183454`,
+            search_url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parsed.pokemonName + ' ' + (parsed.cardType || '') + ' ' + parsed.cardNumber)}&_sacat=183454`,
             original_title: title
           });
         }
@@ -677,15 +563,12 @@ Deno.serve(async (req) => {
       const auctionRatio = data.total_count > 0 ? (data.auction_count / data.total_count) : 0;
       const previousFrequency = previousMap.get(cardKey) || 0;
       
-      // Fetch TCGdex image - pass original title for set matching
-      const originalTitle = Array.from(cardMap.entries())
-        .find(([key, val]) => key === cardKey)?.[1]?.original_title || '';
+      const originalTitle = data.original_title || '';
       
-      // Use parsed card data for TCGdex search
       const tcgdexData = await fetchTCGdexImage(
-        data.card_base_name || '', 
-        data.card_type || '', 
-        data.card_number, 
+        data.card_base_name || '',
+        data.card_type || '',
+        data.card_number,
         originalTitle
       );
       
@@ -704,7 +587,7 @@ Deno.serve(async (req) => {
       });
     }
     
-    // Clear old snapshots (keep last 2 cycles for growth comparison)
+    // Clear old snapshots (keep last 24 hours for growth comparison)
     const cutoffDate = new Date();
     cutoffDate.setHours(cutoffDate.getHours() - 24);
     const oldSnapshots = await base44.asServiceRole.entities.Snapshot.filter({}, '-timestamp');
@@ -719,8 +602,8 @@ Deno.serve(async (req) => {
       await base44.asServiceRole.entities.Snapshot.bulkCreate(snapshots);
     }
     
-    return Response.json({ 
-      success: true, 
+    return Response.json({
+      success: true,
       cards_discovered: snapshots.length,
       timestamp: now
     });
