@@ -412,6 +412,16 @@ function formatDisplayName(cardName, cardType, localId) {
     cleanName = cleanName.replace(regex, '').trim();
   }
   
+  // Remove all stop words from the name
+  const nameTokens = cleanName.split(/\s+/);
+  const filteredTokens = nameTokens.filter(token => {
+    return !STOP_WORDS.some(sw => sw.toLowerCase() === token.toLowerCase());
+  });
+  cleanName = filteredTokens.join(' ').trim();
+  
+  // If name becomes empty after filtering, return empty string to skip this card
+  if (!cleanName) return '';
+  
   cleanName = cleanName.replace(/\s+/g, ' ').trim();
   
   // Build canonical display: Name | Type | LocalId
