@@ -15,8 +15,17 @@ const SEED_QUERIES = [
 ];
 
 const GRADING_KEYWORDS = [
-  'psa', 'bgs', 'cgc', 'sgc', 'graded', 'slab', 'gem mint',
-  '9.5', '10', 'pop report', 'beckett', 'encapsulated'
+  'psa', 'bgs', 'cgc', 'sgc', 'beckett', 'graded', 'grade', 'gem mint', 
+  'pristine', 'slab', 'slabbed', 'encased', 'cert', 'certified', 
+  'subgrades', 'population', 'psa10', 'psa 10', 'bgs9.5', 'bgs 9.5', 
+  'cgc10', 'cgc 10', 'sgc10', 'sgc 10', '9.5', '10'
+];
+
+const RARITY_STOPWORDS = [
+  'rare', 'ultra rare', 'secret rare', 'hyper rare', 'double rare', 
+  'illustration rare', 'special illustration rare', 'ir', 'sir', 'sr', 
+  'ur', 'hr', 'ar', 'ultra', 'secret', 'hyper', 'double', 'illustration',
+  'special'
 ];
 
 const EXCLUDE_KEYWORDS = [
