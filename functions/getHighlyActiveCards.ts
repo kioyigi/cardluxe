@@ -276,22 +276,38 @@ function extractLocalIdAndType(title) {
   const normalized = title.toLowerCase();
   
   // Extract fraction localId (###/###)
-  const fractionPattern = /\b(\d{1,3})\s*\/\s*\d{2,3}\b/;
-  const fractionMatch = title.match(fractionPattern);
+  const fractionPattern = /\b(\d{1,3})\s*\/\s*(\d{2,3})\b/g;
+  const fractionMatches = [...title.matchAll(fractionPattern)];
+  
+  // Special patterns: TG##, RC##, H##
+  const specialPattern = /\b(TG|RC|H)(\d{1,2})\b/gi;
+  const specialMatches = [...title.matchAll(specialPattern)];
+  
+  // Single numeric pattern
+  const singleNumPattern = /\b(\d{1,3})\b/g;
+  const singleMatches = [...title.matchAll(singleNumPattern)];
   
   let localId = null;
   let fullFraction = null;
   
-  if (fractionMatch) {
-    localId = fractionMatch[1]; // Left side
-    fullFraction = fractionMatch[0];
-  } else {
-    // Try single numeric (only if no fraction exists)
-    const singleNumPattern = /\b(\d{1,3})\b/g;
-    const numMatches = title.match(singleNumPattern);
-    if (numMatches && numMatches.length === 1) {
-      localId = numMatches[0];
-    }
+  // Check for ambiguity: multiple fractions or special patterns
+  if (fractionMatches.length > 1 || specialMatches.length > 1) {
+    return { localId: null, fullFraction: null, extractedType: null };
+  }
+  
+  if (fractionMatches.length === 1) {
+    localId = fractionMatches[0][1]; // Left side number
+    fullFraction = fractionMatches[0][0]; // Full fraction
+  } else if (specialMatches.length === 1) {
+    localId = specialMatches[0][1] + specialMatches[0][2]; // e.g., "TG12"
+    fullFraction = specialMatches[0][0];
+  } else if (singleMatches.length === 1) {
+    // Only one numeric token found
+    localId = singleMatches[0][1];
+    fullFraction = null;
+  } else if (singleMatches.length > 1) {
+    // Multiple numeric tokens - ambiguous
+    return { localId: null, fullFraction: null, extractedType: null };
   }
   
   // Extract variant/type (longest match first)
