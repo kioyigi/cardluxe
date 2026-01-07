@@ -10,7 +10,7 @@ export default function HighlyActiveCards() {
   const queryClient = useQueryClient();
   const { data: trendingCards = [], isLoading, isFetching } = useQuery({
     queryKey: ['trending-cards'],
-    queryFn: () => base44.entities.TrendingCard.list('-rank', 500),
+    queryFn: () => base44.entities.TrendingCard.list('rank', 500),
     initialData: [],
     staleTime: 1000 * 60 * 30,
   });
