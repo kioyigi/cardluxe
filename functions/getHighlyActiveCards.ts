@@ -312,18 +312,36 @@ function formatDisplayName(cardName, cardType, localId) {
   return parts.join(' | ');
 }
 
-function generateCardKey(title) {
-  const cardNumber = extractAndValidateCardNumber(title);
+function parseCard(title) {
+  // Extract localId and type from title
+  const { localId, fullFraction, extractedType } = extractLocalIdAndType(title);
   
-  // CRITICAL: Reject if no valid single card number
-  if (!cardNumber) {
-    return null;
+  if (!localId) {
+    return null; // No valid card number found
   }
   
-  const normalized = normalizeTitle(title);
-  const pokemonName = extractPokemonName(normalized, cardNumber);
+  // Try matching against catalog
+  const catalogMatch = matchCardFromCatalog(title, localId, extractedType);
   
-  return `${pokemonName}|${cardNumber}`;
+  if (catalogMatch) {
+    // Use catalog data
+    const displayName = formatDisplayName(
+      catalogMatch.name, 
+      extractedType || catalogMatch.type, 
+      fullFraction || localId
+    );
+    
+    return {
+      cardName: catalogMatch.name,
+      cardType: extractedType || catalogMatch.type,
+      localId: fullFraction || localId,
+      displayName,
+      cardKey: `${catalogMatch.name}|${extractedType || catalogMatch.type}|${localId}`
+    };
+  }
+  
+  // Fallback: no catalog match, return null (better than wrong data)
+  return null;
 }
 
 async function getEbayToken() {
