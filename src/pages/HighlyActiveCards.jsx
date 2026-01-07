@@ -1,68 +1,22 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Flame, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
-
-function calculateActivityScore(card) {
-  const frequencyScore = Math.log(1 + (card.frequency_count || 0));
-  
-  const growthRate = card.previous_frequency > 0
-    ? (card.frequency_count - card.previous_frequency) / card.previous_frequency
-    : card.frequency_count > 0 ? 1 : 0;
-  
-  let priceSpread = 0;
-  if (card.sampled_prices && card.sampled_prices.length >= 3) {
-    const sorted = [...card.sampled_prices].sort((a, b) => a - b);
-    const q1 = sorted[Math.floor(sorted.length * 0.25)];
-    const q3 = sorted[Math.floor(sorted.length * 0.75)];
-    const median = sorted[Math.floor(sorted.length / 2)];
-    const iqr = q3 - q1;
-    priceSpread = median > 0 ? iqr / median : 0;
-  }
-  
-  return frequencyScore + (1.2 * growthRate) + (0.3 * priceSpread);
-}
-
-function calculateMedianPrice(prices) {
-  if (!prices || prices.length === 0) return 0;
-  const sorted = [...prices].sort((a, b) => a - b);
-  return sorted[Math.floor(sorted.length / 2)];
-}
+import { Flame, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 
 export default function HighlyActiveCards() {
   const queryClient = useQueryClient();
-  const { data: snapshots = [], isLoading, refetch, isFetching } = useQuery({
-    queryKey: ['highly-active-cards'],
-    queryFn: () => base44.entities.Snapshot.filter({}, '-timestamp', 5000),
+  const { data: trendingCards = [], isLoading, isFetching } = useQuery({
+    queryKey: ['trending-cards'],
+    queryFn: () => base44.entities.TrendingCard.list('-rank', 500),
     initialData: [],
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 30,
   });
 
-  const rankedCards = useMemo(() => {
-    const latestTimestamp = snapshots[0]?.timestamp;
-    if (!latestTimestamp) return [];
-    
-    const latestCards = snapshots.filter(s => s.timestamp === latestTimestamp);
-    
-    const cardsWithScores = latestCards.map(card => ({
-      ...card,
-      activityScore: calculateActivityScore(card),
-      medianPrice: calculateMedianPrice(card.sampled_prices),
-      growthRate: card.previous_frequency > 0
-        ? ((card.frequency_count - card.previous_frequency) / card.previous_frequency) * 100
-        : card.frequency_count > 0 ? 100 : 0
-    }));
-    
-    return cardsWithScores
-      .sort((a, b) => b.activityScore - a.activityScore)
-      .slice(0, 500);
-  }, [snapshots]);
-
-  const lastUpdated = snapshots[0]?.timestamp 
-    ? new Date(snapshots[0].timestamp).toLocaleString()
+  const lastUpdated = trendingCards[0]?.last_updated 
+    ? new Date(trendingCards[0].last_updated).toLocaleString()
     : 'Never';
 
   if (isLoading) {
@@ -88,16 +42,16 @@ export default function HighlyActiveCards() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <Flame className="h-6 w-6 text-orange-500" />
-                <h1 className="text-4xl font-bold text-white">Highly Active Raw Cards</h1>
+                <h1 className="text-4xl font-bold text-white">Trending Cards</h1>
               </div>
               <p className="text-zinc-400">
-                Top {rankedCards.length} most active raw Pokémon cards on the market
+                Top {trendingCards.length} trending Pokémon cards ranked by market activity
               </p>
             </div>
             <Button
               onClick={() => {
-                base44.functions.invoke('getHighlyActiveCards');
-                queryClient.invalidateQueries({ queryKey: ['highly-active-cards'] });
+                base44.functions.invoke('getTrendingCards');
+                queryClient.invalidateQueries({ queryKey: ['trending-cards'] });
               }}
               disabled={isFetching}
               variant="outline"
@@ -115,16 +69,16 @@ export default function HighlyActiveCards() {
             </div>
             <div>
               <span className="text-zinc-500">Cards Tracked: </span>
-              <span className="text-white">{rankedCards.length}</span>
+              <span className="text-white">{trendingCards.length}</span>
             </div>
           </div>
         </motion.div>
 
-        {rankedCards.length === 0 ? (
+        {trendingCards.length === 0 ? (
           <div className="text-center py-24 bg-zinc-900/50 rounded-2xl border border-zinc-800">
             <Flame className="h-12 w-12 mx-auto text-zinc-600 mb-4" />
-            <p className="text-zinc-400 text-lg mb-2">No market data available yet</p>
-            <p className="text-zinc-500">The system will collect data automatically every 6 hours</p>
+            <p className="text-zinc-400 text-lg mb-2">No trending data available yet</p>
+            <p className="text-zinc-500">Click refresh to fetch the latest trending cards</p>
           </div>
         ) : (
           <div className="bg-zinc-900/50 rounded-2xl border border-zinc-800 overflow-hidden">
@@ -135,16 +89,15 @@ export default function HighlyActiveCards() {
                     <th className="px-6 py-4 text-left text-zinc-400 font-semibold text-sm">Rank</th>
                     <th className="px-6 py-4 text-left text-zinc-400 font-semibold text-sm w-16"></th>
                     <th className="px-6 py-4 text-left text-zinc-400 font-semibold text-sm">Card</th>
-                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Activity</th>
-                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Frequency</th>
-                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">24h Change</th>
-                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Median Price</th>
-                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Auction %</th>
+                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Type</th>
+                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Rarity</th>
+                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Activity Score</th>
+                    <th className="px-6 py-4 text-center text-zinc-400 font-semibold text-sm">Price</th>
                     <th className="px-6 py-4 text-right text-zinc-400 font-semibold text-sm">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rankedCards.map((card, index) => (
+                  {trendingCards.map((card, index) => (
                     <motion.tr
                       key={card.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -161,14 +114,14 @@ export default function HighlyActiveCards() {
                               'text-red-500'
                             }`} />
                           )}
-                          <span className="text-white font-bold">{index + 1}</span>
+                          <span className="text-white font-bold">{card.rank}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="w-12 h-16 rounded overflow-hidden bg-zinc-800 flex items-center justify-center">
-                          {card.tcgdex_image_url ? (
+                          {card.card_image_url ? (
                             <img 
-                              src={card.tcgdex_image_url} 
+                              src={card.card_image_url} 
                               alt={card.card_name}
                               className="w-full h-full object-cover"
                             />
@@ -179,48 +132,31 @@ export default function HighlyActiveCards() {
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          <p className="text-white font-medium">
-                            {card.card_name}
-                          </p>
+                          <p className="text-white font-medium">{card.card_name}</p>
+                          <p className="text-zinc-500 text-sm">#{card.card_number}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
+                        <Badge variant="outline" className="border-zinc-700 text-zinc-400">
+                          {card.card_type || 'N/A'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                          {card.card_rarity || 'Unknown'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
                         <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
-                          {card.activityScore.toFixed(2)}
+                          ${card.activity_score.toFixed(2)}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 text-center text-white font-semibold">
-                        {card.frequency_count}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {card.growthRate !== 0 ? (
-                          <div className={`flex items-center justify-center gap-1 ${
-                            card.growthRate > 0 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {card.growthRate > 0 ? (
-                              <TrendingUp className="h-4 w-4" />
-                            ) : (
-                              <TrendingDown className="h-4 w-4" />
-                            )}
-                            <span className="font-semibold">
-                              {Math.abs(card.growthRate).toFixed(0)}%
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-zinc-500">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center text-white font-semibold">
-                        ${card.medianPrice.toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="text-zinc-400">
-                          {(card.auction_ratio * 100).toFixed(0)}%
-                        </span>
+                        ${card.card_price.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <a
-                          href={card.search_url}
+                          href={`https://www.tcgdex.net/cards/${card.tcgdex_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -230,7 +166,7 @@ export default function HighlyActiveCards() {
                             className="border-zinc-700 text-zinc-400 hover:text-white"
                           >
                             <ExternalLink className="h-3 w-3 mr-1" />
-                            eBay
+                            View
                           </Button>
                         </a>
                       </td>
