@@ -619,7 +619,8 @@ Deno.serve(async (req) => {
         
         // RAW-ONLY: Filter graded/slab listings first
         if (hasGradingKeyword(title)) continue;
-        if (hasExcludeKeyword(title)) continue;
+        // Filter junk listings (lots, bundles, sealed product, etc.)
+        if (hasJunkKeyword(title)) continue;
         if (!item.price?.value) continue;
         
         // Parse card using catalog matching
