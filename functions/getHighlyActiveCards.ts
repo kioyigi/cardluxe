@@ -33,6 +33,43 @@ const CARD_TYPES = [
   'Shining', 'Amazing Rare', 'Ultra Beast', 'Promo', 'Trainer Gallery'
 ];
 
+const SET_NAMES = [
+  "Macdonald's Collection", "Genetic Apex", "Mythical Island", "Space-Time Smackdown",
+  "Triumphant Light", "Shining Revelry", "Celestial Guardians", "Extradimensional Crisis",
+  "Eevee Grove", "Wisdom of Sea and Sky", "Secluded Springs", "Mega Rising", "Crimson Blaze",
+  "Promos-A", "Base Set", "Jungle", "Fossil", "Team Rocket", "Wizards Black Star Promos",
+  "Best of game", "Black & White", "Plasma Blast", "Legendary Treasures", "Emerging Powers",
+  "Noble Victories", "Next Destinies", "Dark Explorers", "Dragons Exalted", "Boundaries Crossed",
+  "Plasma Storm", "Plasma Freeze", "BW Black Star Promos", "Celebrations", "Call of Legends",
+  "Double Crisis", "Detective Pikachu", "Diamond & Pearl", "Mysterious Treasures", "Secret Wonders",
+  "Great Encounters", "Majestic Dawn", "Legends Awakened", "Stormfront", "DP Black Star Promos",
+  "Dragon Vault", "Expedition Base Set", "Aquapolis", "Skyridge", "Ruby & Sapphire",
+  "Unseen Forces", "Delta Species", "Legend Maker", "Holon Phantoms", "Crystal Guardians",
+  "Dragon Frontiers", "Power Keepers", "Sandstorm", "Dragon", "Team Magma vs Team Aqua",
+  "Hidden Legends", "Poké Card Creator Pack", "FireRed & LeafGreen", "Team Rocket Returns",
+  "Deoxys", "Emerald", "Unseen Forces Unown Collection", "Pokémon Futsal", "Generations",
+  "Gym Heroes", "Gym Challenge", "HeartGold SoulSilver", "Unleashed", "Undaunted", "Triumphant",
+  "HGSS Black Star Promos", "Jumbo cards", "Legendary Collection", "Mega Evolution",
+  "Phantasmal Flames", "MEP Black Star Promos", "Neo Genesis", "Neo Discovery", "Neo Revelation",
+  "Neo Destiny", "Nintendo Black Star Promos", "Platinum", "Rising Rivals", "Supreme Victors",
+  "Arceus", "POP Series", "Radiant Collection", "Pokémon Rumble", "Southern Islands",
+  "Sun & Moon", "Unbroken Bonds", "Unified Minds", "Hidden Fates", "Cosmic Eclipse",
+  "Guardians Rising", "Burning Shadows", "Shining Legends", "Crimson Invasion", "Ultra Prism",
+  "Forbidden Light", "Celestial Storm", "Dragon Majesty", "Lost Thunder", "Team Up",
+  "Yellow A Alternate", "SM Black Star Promos", "Sample", "Scarlet & Violet", "Paldea Evolved",
+  "Obsidian Flames", "Paradox Rift", "Paldean Fates", "Temporal Forces", "Twilight Masquerade",
+  "Shrouded Fable", "Stellar Crown", "Surging Sparks", "Prismatic Evolutions", "Journey Together",
+  "Destined Rivals", "Black Bolt", "White Flare", "SVP Black Star Promos", "Sword & Shield",
+  "Astral Radiance", "Pokémon GO", "Lost Origin", "Silver Tempest", "Crown Zenith",
+  "Rebel Clash", "Darkness Ablaze", "Champion's Path", "Vivid Voltage", "Shining Fates",
+  "Battle Styles", "Chilling Reign", "Evolving Skies", "Fusion Strike", "Brilliant Stars",
+  "SWSH Black Star Promos", "BW trainer Kit", "DP trainer Kit", "EX trainer Kit",
+  "HS trainer Kit", "SM trainer Kit", "XY trainer Kit", "W Promotional", "Kalos Starter Set",
+  "Fates Collide", "Steam Siege", "Evolutions", "Flashfire", "Furious Fists", "Phantom Forces",
+  "Primal Clash", "Roaring Skies", "Ancient Origins", "BREAKthrough", "BREAKpoint",
+  "Yello A Alternate", "XY Black Star Promos"
+];
+
 const CONDITION_FLUFF = [
   'nm', 'lp', 'mp', 'hp', 'damaged', 'mint', 'near', 'played',
   'authentic', 'rare', 'vintage', 'holo', 'reverse', 'tcg',
@@ -87,6 +124,13 @@ function extractPokemonName(normalizedTitle, cardNumber) {
   
   // Remove ALL card number patterns first (including the validated one)
   text = text.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '');
+  text = text.replace(/\s+/g, ' ').trim();
+  
+  // Remove known set names (case-insensitive)
+  for (const setName of SET_NAMES) {
+    const regex = new RegExp(`\\b${setName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    text = text.replace(regex, '');
+  }
   text = text.replace(/\s+/g, ' ').trim();
   
   const words = text.split(' ').filter(w => w.length > 0);
