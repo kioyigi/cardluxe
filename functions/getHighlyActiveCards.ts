@@ -33,7 +33,30 @@ const CARD_TYPES = [
   'Shining', 'Amazing Rare', 'Ultra Beast', 'Promo', 'Trainer Gallery'
 ];
 
-const SET_NAMES = [
+// Comprehensive list of all set names and IDs from TCGdex
+const ALL_SET_IDENTIFIERS = [
+  // Set IDs
+  '2011bw', '2012bw', '2014xy', '2015xy', '2016xy', '2017sm', '2018sm', '2019sm', '2021swsh',
+  'a1', 'a1a', 'a2', 'a2a', 'a2b', 'a3', 'a3a', 'a3b', 'a4', 'a4a', 'b1', 'b1a', 'p-a',
+  'base1', 'base2', 'base3', 'base4', 'base5', 'basep', 'bog',
+  'bw1', 'bw10', 'bw11', 'bw2', 'bw3', 'bw4', 'bw5', 'bw6', 'bw7', 'bw8', 'bw9', 'bwp',
+  'cel25', 'col1', 'dc1', 'det1',
+  'dp1', 'dp2', 'dp3', 'dp4', 'dp5', 'dp6', 'dp7', 'dpp', 'dv1',
+  'ecard1', 'ecard2', 'ecard3',
+  'ex1', 'ex2', 'ex3', 'ex4', 'ex5', 'ex5.5', 'ex6', 'ex7', 'ex8', 'ex9', 'ex10', 'ex11', 'ex12', 'ex13', 'ex14', 'ex15', 'ex16', 'exu',
+  'fut2020', 'g1', 'gym1', 'gym2',
+  'hgss1', 'hgss2', 'hgss3', 'hgss4', 'hgssp',
+  'jumbo', 'lc', 'me01', 'me02', 'mep',
+  'neo1', 'neo2', 'neo3', 'neo4', 'np',
+  'pl1', 'pl2', 'pl3', 'pl4',
+  'pop1', 'pop2', 'pop3', 'pop4', 'pop5', 'pop6', 'pop7', 'pop8', 'pop9',
+  'rc', 'ru1', 'si1',
+  'sm1', 'sm2', 'sm3', 'sm3.5', 'sm4', 'sm5', 'sm6', 'sm7', 'sm7.5', 'sm8', 'sm9', 'sm10', 'sm11', 'sm115', 'sm12', 'sma', 'smp',
+  'sp',
+  'sv01', 'sv02', 'sv03', 'sv03.5', 'sv04', 'sv04.5', 'sv05', 'sv06', 'sv06.5', 'sv07', 'sv08', 'sv08.5', 'sv09', 'sv10', 'sv10.5b', 'sv10.5w', 'svp',
+  'swsh1', 'swsh2', 'swsh3', 'swsh3.5', 'swsh4', 'swsh4.5', 'swsh5', 'swsh6', 'swsh7', 'swsh8', 'swsh9', 'swsh10', 'swsh10.5', 'swsh11', 'swsh12', 'swsh12.5', 'swshp',
+  'wp', 'xy0', 'xy1', 'xy2', 'xy3', 'xy4', 'xy5', 'xy6', 'xy7', 'xy8', 'xy9', 'xy10', 'xy11', 'xy12', 'xya', 'xyp',
+  // Full set names
   "Macdonald's Collection", "Genetic Apex", "Mythical Island", "Space-Time Smackdown",
   "Triumphant Light", "Shining Revelry", "Celestial Guardians", "Extradimensional Crisis",
   "Eevee Grove", "Wisdom of Sea and Sky", "Secluded Springs", "Mega Rising", "Crimson Blaze",
@@ -67,7 +90,9 @@ const SET_NAMES = [
   "HS trainer Kit", "SM trainer Kit", "XY trainer Kit", "W Promotional", "Kalos Starter Set",
   "Fates Collide", "Steam Siege", "Evolutions", "Flashfire", "Furious Fists", "Phantom Forces",
   "Primal Clash", "Roaring Skies", "Ancient Origins", "BREAKthrough", "BREAKpoint",
-  "Yello A Alternate", "XY Black Star Promos"
+  "Yello A Alternate", "XY Black Star Promos", "Excadrill", "Zoroark", "Lucario", "Manaphy",
+  "Latias", "Latios", "Minun", "Plusle", "Gyarados", "Raichu", "Lycanroc", "Alolan Raichu",
+  "Bisharp", "Noivern", "Pikachu Libre", "Suicune", "Sylveon", "Wigglytuff"
 ];
 
 const CONDITION_FLUFF = [
@@ -126,9 +151,9 @@ function extractPokemonName(normalizedTitle, cardNumber) {
   text = text.replace(/\b\d{1,3}\s*\/\s*\d{2,3}\b/g, '');
   text = text.replace(/\s+/g, ' ').trim();
   
-  // Remove known set names (case-insensitive)
-  for (const setName of SET_NAMES) {
-    const regex = new RegExp(`\\b${setName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+  // Remove all known set names and IDs (case-insensitive)
+  for (const setIdentifier of ALL_SET_IDENTIFIERS) {
+    const regex = new RegExp(`\\b${setIdentifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
     text = text.replace(regex, '');
   }
   text = text.replace(/\s+/g, ' ').trim();
@@ -143,25 +168,16 @@ function extractPokemonName(normalizedTitle, cardNumber) {
     'game', 'official', 'original', 'genuine', 'real', 'not', 'fake',
     'free', 'shipping', 'new', 'used', 'pre', 'owned', 'pack', 'fresh',
     'from', 'booster', 'raw', 'ungraded', 'cracked', 'slab', 'pwcc',
-    'beautiful', 'perfect', 'amazing', 'stunning', 'gorgeous', 'rare',
-    'super', 'ultra', 'secret', 'full', 'art', 'alt', 'alternate',
+    'beautiful', 'perfect', 'amazing', 'stunning', 'gorgeous',
+    'super', 'secret', 'full', 'art', 'alt', 'alternate',
     'illustration', 'regular', 'special', 'delivery', 'promotional',
     'holo', 'holofoil', 'reverse', 'non', 'standard', 'etched', 'textured',
-    'journey', 'together', 'wallace', 'silver', 'tempest', 'prismatic',
-    'evolutions', 'shocks', 'rocket', '151', 'clarity', 'charizard',
-    'generation', 'team', 'champion', 'world', 'championships', 'league',
+    'wallace', 'clarity',
+    'champion', 'world', 'championships', 'league',
     'prerelease', 'staff', 'winner', 'regional', 'national', 'international',
-    'sv', 'scarlet', 'violet', 'with', 's', 'swsh', 'xy', 'sm', 'bw', 'dp',
-    'ex', 'sword', 'shield', 'sun', 'moon', 'astral', 'radiance', 'paldea',
-    'paldean', 'fates', 'paradox', 'rift', 'temporal', 'forces', 'twilight',
-    'masquerade', 'obsidian', 'flames', 'fusion', 'strike', 'chilling', 'reign',
+    'with', 's',
     'nm', 'lp', 'mp', 'hp', 'damaged', 'mint', 'near', 'played',
-    'authentic', 'vintage', 'tcg', 'pokemon', 'card', 'phantasmal', 'pok', 'mon',
-    'black', 'star', 'battle', 'styles', 'promo', 'shining', 
-    'brilliant', 'stars', 'darkness', 'ablaze',
-    'rebel', 'clash', 'base', 'set', 'cosmic', 'eclipse', 'lost', 'thunder', 'unbroken',
-    'bonds', 'up', 'detective', 'hidden', 'celestial', 'storm',
-    'forbidden', 'light', 'crimson', 'invasion', 'unified', 'minds',
+    'authentic', 'vintage', 'tcg', 'pokemon', 'card', 'pok', 'mon',
     '1x', '2x', '3x', '4x', '5x', '6x', '7x', '8x', '9x',
     'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7', 'x8', 'x9'
   ];
