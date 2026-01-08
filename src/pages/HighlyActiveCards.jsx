@@ -8,6 +8,7 @@ import { Flame, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
 
 export default function HighlyActiveCards() {
   const queryClient = useQueryClient();
+  const [fetchingData, setFetchingData] = React.useState(false);
   const { data: trendingCards = [], isLoading, isFetching } = useQuery({
     queryKey: ['trending-cards'],
     queryFn: () => base44.entities.TrendingCard.list('rank', 500),
@@ -16,25 +17,29 @@ export default function HighlyActiveCards() {
   });
 
   useEffect(() => {
-    if (!isLoading && trendingCards.length === 0) {
+    if (!isLoading && trendingCards.length === 0 && !fetchingData) {
+      setFetchingData(true);
       base44.functions.invoke('getTrendingCards').then(() => {
         queryClient.invalidateQueries({ queryKey: ['trending-cards'] });
+        setFetchingData(false);
       }).catch(err => {
         console.error('Failed to fetch trending cards:', err);
+        setFetchingData(false);
       });
     }
-  }, [isLoading, trendingCards.length, queryClient]);
+  }, [isLoading, trendingCards.length, queryClient, fetchingData]);
 
   const lastUpdated = trendingCards[0]?.last_updated 
     ? new Date(trendingCards[0].last_updated).toLocaleString()
     : 'Never';
 
-  if (isLoading) {
+  if (isLoading || fetchingData) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-amber-500 mx-auto mb-4" />
           <p className="text-zinc-400">Loading market data...</p>
+          {fetchingData && <p className="text-zinc-500 text-sm mt-2">Fetching top trending cards (~30 seconds)</p>}
         </div>
       </div>
     );

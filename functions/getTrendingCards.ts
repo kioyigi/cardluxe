@@ -69,8 +69,8 @@ Deno.serve(async (req) => {
     const trendingCards = [];
     const now = new Date().toISOString();
     
-    // Process top 100 cards (or adjust limit as needed)
-    const topCards = csvData.slice(0, 100);
+    // Process top 30 cards for faster initial load
+    const topCards = csvData.slice(0, 30);
     
     for (let i = 0; i < topCards.length; i++) {
       const row = topCards[i];
@@ -105,8 +105,8 @@ Deno.serve(async (req) => {
       trendingCards.push(trendingCard);
       
       // Small delay to avoid rate limiting
-      if (i % 10 === 0 && i > 0) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+      if (i % 5 === 0 && i > 0) {
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
     }
     
