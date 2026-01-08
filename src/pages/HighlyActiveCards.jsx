@@ -19,6 +19,8 @@ export default function HighlyActiveCards() {
     if (!isLoading && trendingCards.length === 0) {
       base44.functions.invoke('getTrendingCards').then(() => {
         queryClient.invalidateQueries({ queryKey: ['trending-cards'] });
+      }).catch(err => {
+        console.error('Failed to fetch trending cards:', err);
       });
     }
   }, [isLoading, trendingCards.length, queryClient]);
@@ -57,9 +59,13 @@ export default function HighlyActiveCards() {
               </p>
             </div>
             <Button
-              onClick={() => {
-                base44.functions.invoke('getTrendingCards');
-                queryClient.invalidateQueries({ queryKey: ['trending-cards'] });
+              onClick={async () => {
+                try {
+                  await base44.functions.invoke('getTrendingCards');
+                  queryClient.invalidateQueries({ queryKey: ['trending-cards'] });
+                } catch (err) {
+                  console.error('Failed to refresh:', err);
+                }
               }}
               disabled={isFetching}
               variant="outline"
