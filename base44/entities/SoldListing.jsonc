@@ -1,0 +1,46 @@
+{
+  "name": "SoldListing",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "TCGdex card ID"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "ebay",
+        "shop",
+        "auction"
+      ],
+      "description": "Where the sale occurred"
+    },
+    "sale_price": {
+      "type": "number",
+      "description": "Price sold for"
+    },
+    "sale_date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "condition": {
+      "type": "string"
+    },
+    "external_id": {
+      "type": "string",
+      "description": "eBay listing ID or other external reference"
+    },
+    "listing_title": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "card_id",
+    "source",
+    "sale_price",
+    "sale_date"
+  ]
+}

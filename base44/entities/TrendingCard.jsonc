@@ -1,0 +1,53 @@
+{
+  "name": "TrendingCard",
+  "type": "object",
+  "properties": {
+    "tcgdex_id": {
+      "type": "string",
+      "description": "TCGdex card ID"
+    },
+    "card_name": {
+      "type": "string",
+      "description": "Full card name from TCGdex"
+    },
+    "card_number": {
+      "type": "string",
+      "description": "Card number"
+    },
+    "card_type": {
+      "type": "string",
+      "description": "Card type/variant"
+    },
+    "card_rarity": {
+      "type": "string",
+      "description": "Card rarity from TCGdex"
+    },
+    "card_image_url": {
+      "type": "string",
+      "description": "High-res image URL from TCGdex"
+    },
+    "activity_score": {
+      "type": "number",
+      "description": "avg1_usd value from CSV - activity indicator"
+    },
+    "card_price": {
+      "type": "number",
+      "description": "Current market price from TCGdex"
+    },
+    "rank": {
+      "type": "number",
+      "description": "Ranking position based on activity score"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this data was last fetched"
+    }
+  },
+  "required": [
+    "tcgdex_id",
+    "card_name",
+    "activity_score",
+    "rank"
+  ]
+}

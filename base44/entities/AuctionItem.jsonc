@@ -1,0 +1,84 @@
+{
+  "name": "AuctionItem",
+  "type": "object",
+  "properties": {
+    "card_id": {
+      "type": "string",
+      "description": "TCGdex card ID"
+    },
+    "card_name": {
+      "type": "string",
+      "description": "Name of the card"
+    },
+    "card_image": {
+      "type": "string",
+      "description": "URL to card image"
+    },
+    "card_set": {
+      "type": "string",
+      "description": "Set the card belongs to"
+    },
+    "card_rarity": {
+      "type": "string",
+      "description": "Rarity of the card"
+    },
+    "starting_price": {
+      "type": "number",
+      "description": "Starting bid price in USD"
+    },
+    "current_price": {
+      "type": "number",
+      "description": "Current highest bid"
+    },
+    "buy_now_price": {
+      "type": "number",
+      "description": "Optional buy now price"
+    },
+    "auction_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the auction starts"
+    },
+    "auction_end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the auction ends"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "upcoming",
+        "active",
+        "ended",
+        "sold"
+      ],
+      "default": "upcoming"
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "mint",
+        "near_mint",
+        "excellent",
+        "good",
+        "played"
+      ],
+      "description": "Card condition"
+    },
+    "winner_id": {
+      "type": "string",
+      "description": "User ID of auction winner"
+    },
+    "bid_count": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "card_id",
+    "card_name",
+    "starting_price",
+    "auction_end",
+    "status"
+  ]
+}

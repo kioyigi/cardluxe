@@ -1,0 +1,32 @@
+{
+  "name": "WatchlistItem",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User who added to watchlist"
+    },
+    "card_id": {
+      "type": "string",
+      "description": "TCGdex card ID"
+    },
+    "card_name": {
+      "type": "string"
+    },
+    "card_image": {
+      "type": "string"
+    },
+    "card_set": {
+      "type": "string"
+    },
+    "price_alert": {
+      "type": "number",
+      "description": "Optional price alert threshold"
+    }
+  },
+  "required": [
+    "user_email",
+    "card_id",
+    "card_name"
+  ]
+}

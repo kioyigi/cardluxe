@@ -1,0 +1,31 @@
+{
+  "name": "Bid",
+  "type": "object",
+  "properties": {
+    "auction_item_id": {
+      "type": "string",
+      "description": "Reference to auction item"
+    },
+    "bidder_email": {
+      "type": "string",
+      "description": "Email of the bidder"
+    },
+    "bidder_name": {
+      "type": "string",
+      "description": "Display name of bidder"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Bid amount in USD"
+    },
+    "is_winning": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "auction_item_id",
+    "bidder_email",
+    "amount"
+  ]
+}
